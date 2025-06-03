@@ -40,3 +40,8 @@ a {
     color-scheme: dark;
   }
 }
+
+#__next-route-announcer,
+.nextjs-portal {
+  display: none !important;
+}
