@@ -1,22 +1,57 @@
 "use client";
 
 import React from "react";
+import axios from 'axios';
+
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    alert("Not connected to the backend");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (firstName.length < 2 || lastName.length < 2) {
+      alert("First name and last name must be at least 2 characters long");
+      return;
+    }
+
+    if (!email.includes("@") || email.length < 5) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:8080/api/user/register", {
+        name: firstName + " " + lastName,
+        email: email,
+        password: password,
+        profilePic: "", 
+      });
+      const data = response.data;
+      if (data.success) {
+        alert("Successfully signed up! You are also signed in.")
+      } else {
+        alert("Sign up failed: " + data);
+      }
+
+    } catch (error) {
+      alert("An error occurred during sign up. Please try again later.");
+    }
+    return;
   }
 
   function hangleSignIn() {
-    // navigate to a sign in page here
-    alert("Sign in not implemented");
+    router.push("login");
   }
 
   return (
