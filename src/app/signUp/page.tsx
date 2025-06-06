@@ -12,21 +12,12 @@ export default function SignUpPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    if (firstName.length < 2 || lastName.length < 2) {
-      alert("First name and last name must be at least 2 characters long");
-      return;
-    }
-
-    if (!email.includes("@") || email.length < 5) {
-      alert("Please enter a valid email address");
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
@@ -39,9 +30,10 @@ export default function SignUpPage() {
       });
       const data = response.data;
       if (data.success) {
-        alert("Successfully signed up! You are also signed in.")
+        alert("Successfully signed up! You are also signed in.");
+        setErrorMessage("");
       } else {
-        alert("Sign up failed: " + data);
+        setErrorMessage(data.name || "Sign up failed.");
       }
 
     } catch (error) {
@@ -204,6 +196,17 @@ export default function SignUpPage() {
                   transition: "background 0.2s",
                 }}
               >Login</button>    
+              {errorMessage && (
+                <div style={{
+                  color: "#d32f2f",
+                  fontSize: "0.85rem",
+                  marginTop: "1.2rem",
+                  textAlign: "center",
+                  whiteSpace: "pre-line"
+                }}>
+                  {errorMessage}
+                </div>
+              )}
       </form>
     </div>
   );
