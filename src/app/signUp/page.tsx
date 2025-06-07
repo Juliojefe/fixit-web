@@ -1,22 +1,57 @@
 "use client";
 
 import React from "react";
+import axios from 'axios';
+import { useUser } from "../../context/UserContext";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const { setUser } = useUser();
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    alert("Not connected to the backend");
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:8080/api/user/register", {
+        name: firstName + " " + lastName,
+        email: email,
+        password: password,
+        profilePic: "", 
+      });
+      const data = response.data;
+      if (data.success) {
+        setUser({
+          name: data.name,
+          email: data.email,
+          profilePic: data.profilePic || "",
+          userId: data.userId,
+          isGoogle: data.isGoogle || false,
+        })
+        alert("Successfully signed up! You are also signed in.");
+        setErrorMessage("");
+      } else {
+        setErrorMessage(data.name || "Sign up failed.");
+      }
+
+    } catch (error) {
+      alert("An error occurred during sign up. Please try again later.");
+    }
+    return;
   }
 
   function hangleSignIn() {
-    // navigate to a sign in page here
-    alert("Sign in not implemented");
+    router.push("login");
   }
 
   return (
@@ -169,6 +204,17 @@ export default function SignUpPage() {
                   transition: "background 0.2s",
                 }}
               >Login</button>    
+              {errorMessage && (
+                <div style={{
+                  color: "#d32f2f",
+                  fontSize: "0.85rem",
+                  marginTop: "1.2rem",
+                  textAlign: "center",
+                  whiteSpace: "pre-line"
+                }}>
+                  {errorMessage}
+                </div>
+              )}
       </form>
     </div>
   );
