@@ -2,11 +2,12 @@
 
 import React from "react";
 import axios from 'axios';
-
+import { useUser } from "../../context/UserContext";
 import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -30,6 +31,13 @@ export default function SignUpPage() {
       });
       const data = response.data;
       if (data.success) {
+        setUser({
+          name: data.name,
+          email: data.email,
+          profilePic: data.profilePic || "",
+          userId: data.userId,
+          isGoogle: data.isGoogle || false,
+        })
         alert("Successfully signed up! You are also signed in.");
         setErrorMessage("");
       } else {

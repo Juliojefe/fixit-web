@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { UserProvider } from '../context/UserContext';
 
 export const metadata: Metadata = {
-    title: 'My Next.js App',
-    description: 'A simple Next.js application',
+    title: 'Fixit',
+    description: 'A platform for fixing cars',
 };
 
 export default function RootLayout({
@@ -14,7 +15,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body>
-                <main>{children}</main>
+                <UserProvider>
+                    <main>{children}</main>
+                </UserProvider>
             </body>
         </html>
     );
