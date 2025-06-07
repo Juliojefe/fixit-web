@@ -1,15 +1,46 @@
 "use client";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import axios from 'axios';
+import { useUser } from "../../context/UserContext";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const { setUser } = useUser();
+  const [errorMessage, setErrorMessage] = React.useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setMessage("Not connected to the backend");
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+    try {
+      const response = await axios.post("http://localhost:8080/api/user/login", {
+        email: email,
+        password: password,
+      });
+      const data = response.data;
+      if (data.success) {
+        setUser({
+          name: data.name,
+          email: data.email,
+          profilePic: data.profilePic || "",
+          userId: data.userId,
+          isGoogle: data.isGoogle || false,
+        })
+        alert("Successfully logged in!");
+        setErrorMessage("");
+      } else {
+        setErrorMessage("Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      alert("An error occurred during login. Please try again later.");
+    }
+    return;
   }
 
   function handleSignUp() {
@@ -79,6 +110,25 @@ export default function LoginPage() {
             }}
           />
         </label>
+        <label style={{ color: "#555", fontWeight: 500 }}>
+          Confirm Password
+          <input
+            type="password"
+            value={confirmPassword}
+            required
+            onChange={e => setConfirmPassword(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              marginTop: "0.25rem",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              background: "#fafbfc",
+              color: "#222",
+              fontSize: "1rem",
+            }}
+          />
+        </label>
         <button
           type="submit"
           style={{
@@ -114,10 +164,16 @@ export default function LoginPage() {
         >
           Sign up
         </button>
-        {message && (
-          <div style={{ color: "#d32f2f", marginTop: "1rem", textAlign: "center" }}>
-            {message}
-          </div>
+          {errorMessage && (
+            <div style={{
+              color: "#d32f2f",
+              fontSize: "0.85rem",
+              marginTop: "1.2rem",
+              textAlign: "center",
+              whiteSpace: "pre-line"
+            }}>
+              {errorMessage}
+            </div>
         )}
       </form>
     </div>
