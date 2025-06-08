@@ -38,7 +38,7 @@ export default function SignUpPage() {
           userId: data.userId,
           isGoogle: data.isGoogle || false,
         })
-        alert("Successfully signed up! You are also signed in.");
+        router.push("/home")
         setErrorMessage("");
       } else {
         setErrorMessage(data.name || "Sign up failed.");

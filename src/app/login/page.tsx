@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import axios from 'axios';
@@ -32,7 +33,7 @@ export default function LoginPage() {
           userId: data.userId,
           isGoogle: data.isGoogle || false,
         })
-        alert("Successfully logged in!");
+        router.push("/home");
         setErrorMessage("");
       } else {
         setErrorMessage("Login failed. Please check your credentials.");
