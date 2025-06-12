@@ -55,7 +55,7 @@ export default function SignUpPage() {
   }
 
   function handleSignUpWithGoogle() {
-    alert("Not connected to the backend");
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
   }
 
   return (
@@ -232,7 +232,7 @@ export default function SignUpPage() {
                   alt="Google"
                   style={{ width: 20, height: 20 }}
                 />
-                Sign up with Google
+                Continue with Google
               </button>
               {errorMessage && (
                 <div style={{
