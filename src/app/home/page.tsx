@@ -15,17 +15,10 @@ export default function HomePage() {
     }
   }, [user, router]);
 
-  // function handleLogout() {
-  //   setUser(null);
-  //   router.push("/login");
-  // }
-
   function handleLogout() {
     setUser(null);
-    // router.push("/login"); // Remove this line, let useEffect handle redirect
   }
 
-  // Don't render anything if user is null (prevents "Hello" with blank)
   if (!user) return null;  
 
   return (
