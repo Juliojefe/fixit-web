@@ -54,6 +54,10 @@ export default function SignUpPage() {
     router.push("login");
   }
 
+  function handleSignUpWithGoogle() {
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+  }
+
   return (
     <div
       style={{
@@ -204,6 +208,32 @@ export default function SignUpPage() {
                   transition: "background 0.2s",
                 }}
               >Login</button>    
+              <button
+                type="button"
+                onClick={handleSignUpWithGoogle}
+                style={{
+                  padding: "0.7rem",
+                  fontWeight: "bold",
+                  background: "#fff",
+                  color: "#222",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  marginTop: "0.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/800px-Google_%22G%22_logo.svg.png"
+                  alt="Google"
+                  style={{ width: 20, height: 20 }}
+                />
+                Continue with Google
+              </button>
               {errorMessage && (
                 <div style={{
                   color: "#d32f2f",

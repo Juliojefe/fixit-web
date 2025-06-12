@@ -17,8 +17,9 @@ export default function HomePage() {
 
   function handleLogout() {
     setUser(null);
-    router.push("/login");
   }
+
+  if (!user) return null;  
 
   return (
     <div 
