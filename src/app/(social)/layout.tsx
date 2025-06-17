@@ -1,9 +1,8 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useUser } from "../../context/UserContext";
-import React, { useEffect, useState } from "react";
-import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch } from "react-icons/fa";
+import { useEffect } from "react";
+import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt } from "react-icons/fa";
 
 const sidebarItems = [
   { label: "Home", icon: <FaHome />, route: "/home" },
@@ -16,20 +15,21 @@ const sidebarItems = [
 const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
 
-export default function HomePage() {
+export default function SocialLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, setUser } = useUser();
 
   useEffect(() => {
-      if (!user) {
-        router.push("/login");
-      }
-    }, [user, router]);
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
-  if (!user) return null;
+  if (!user) return null
 
   function handleLogout() {
     setUser(null);
+    router.push("/login");
   }
 
   function handleProfileClick() {
@@ -46,15 +46,24 @@ export default function HomePage() {
           borderRight: "1px solid #e0e0e0",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: "stretch",
           padding: "2rem 0 1rem 0",
           gap: "2rem",
         }}
       >
-        <div style={{ fontWeight: "bold", fontSize: "1.5rem", marginBottom: "2rem", color: "#0070f3" }}>
+        <div
+          style={{
+            fontWeight: "bold",
+            fontSize: "1.5rem",
+            color: "#0070f3",
+            paddingLeft: "2rem", // Align with buttons
+            textAlign: "left",
+            marginBottom: "0.5rem",
+          }}
+        >
           FixIt Social
         </div>
-        <nav style={{ width: "100%" }}>
+        <nav style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0 }}>
           {sidebarItems.map((item) => (
             <button
               key={item.label}
@@ -79,6 +88,28 @@ export default function HomePage() {
               {item.label}
             </button>
           ))}
+          {/* Logout button directly after other items */}
+          <button
+            onClick={handleLogout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              width: "100%",
+              background: "none",
+              border: "none",
+              color: "#d32f2f",
+              fontSize: "1.1rem",
+              padding: "1rem 2rem",
+              cursor: "pointer",
+              fontWeight: "bold",
+              borderRadius: "0 24px 24px 0",
+              transition: "background 0.2s",
+            }}
+          >
+            <span style={{ fontSize: "1.3rem" }}><FaSignOutAlt /></span>
+            Logout
+          </button>
         </nav>
       </aside>
 
@@ -115,10 +146,8 @@ export default function HomePage() {
             }}
           />
         </div>
-        {/* Center Content (empty for now) */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {/* Posts will go here */}
-        </div>
+        {/* Page Content */}
+        <div style={{ flex: 1 }}>{children}</div>
       </main>
     </div>
   );

@@ -1,18 +1,19 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useUser } from "../../context/UserContext";
+import { useUser } from "../../../context/UserContext";
 import React, { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, setUser } = useUser();
+  
   useEffect(() => {
     if (!user) {
       router.push("/login");
     }
   }, [user, router]);
   
-  if (!user) return null;
+  if (!user) return null;  
 
   return (
     <div style={{
@@ -24,7 +25,7 @@ export default function ProfilePage() {
       background: "#f5f6fa",
       color: "#222"
     }}>
-      <h1>Welcome to the profile page, at this time it is under construction</h1>
+      <h1>Welcome to the notifications page, at this time it is under construction</h1>
       <button
         onClick={() => router.push("/home")}
         style={{

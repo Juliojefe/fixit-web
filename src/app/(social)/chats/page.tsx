@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useUser } from "../../context/UserContext";
+import { useUser } from "../../../context/UserContext";
 import React, { useEffect, useState } from "react";
 
 export default function ProfilePage() {
