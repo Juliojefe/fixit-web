@@ -1,43 +1,34 @@
 "use client";
-
 import { useRouter } from "next/navigation";
+import { useUser } from "../../../context/UserContext";
 import React, { useEffect, useState } from "react";
-import axios from 'axios';
-import { useUser } from "../../context/UserContext";
 
-export default function HomePage() {
+export default function ProfilePage() {
   const router = useRouter();
   const { user, setUser } = useUser();
-
   useEffect(() => {
     if (!user) {
       router.push("/login");
     }
   }, [user, router]);
-
-  function handleLogout() {
-    setUser(null);
-  }
-
-  if (!user) return null;  
+  
+  if (!user) return null;
 
   return (
-    <div 
-    style={{
+    <div style={{
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       background: "#f5f6fa",
-      padding: "2rem",
-      textAlign: "center",
+      color: "#222"
     }}>
-      <h1 style={{ color: "#222" }}>Hello {user?.name}</h1>
+      <h1>Welcome to the profile page, at this time it is under construction</h1>
       <button
-        onClick={handleLogout}
-        style= {{
-          marginTop: "1rem",
+        onClick={() => router.push("/home")}
+        style={{
+          marginTop: "2rem",
           padding: "0.7rem 1.5rem",
           background: "#0070f3",
           color: "#fff",
@@ -47,11 +38,9 @@ export default function HomePage() {
           cursor: "pointer",
           fontSize: "1rem",
         }}
-        >
-          Log out
-        </button>
+      >
+        Go back
+      </button>
     </div>
   );
-
-
 }
