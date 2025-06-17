@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 import { useEffect } from "react";
 import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt } from "react-icons/fa";
@@ -17,6 +17,7 @@ const DEFAULT_PROFILE =
 
 export default function SocialLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, setUser } = useUser();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
     }
   }, [user, router]);
 
-  if (!user) return null
+  if (!user) return null;
 
   function handleLogout() {
     setUser(null);
@@ -56,39 +57,42 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
             fontWeight: "bold",
             fontSize: "1.5rem",
             color: "#0070f3",
-            paddingLeft: "2rem", // Align with buttons
+            paddingLeft: "2rem",
             textAlign: "left",
             marginBottom: "0.5rem",
           }}
         >
-          FixIt Social
+          FixIt
         </div>
         <nav style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0 }}>
-          {sidebarItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => router.push(item.route)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-                width: "100%",
-                background: "none",
-                border: "none",
-                color: "#222",
-                fontSize: "1.1rem",
-                padding: "1rem 2rem",
-                cursor: "pointer",
-                fontWeight: "bold",
-                borderRadius: "0 24px 24px 0",
-                transition: "background 0.2s",
-              }}
-            >
-              <span style={{ fontSize: "1.3rem" }}>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-          {/* Logout button directly after other items */}
+          {sidebarItems.map((item) => {
+            const isActive = pathname === item.route;
+            return (
+              <button
+                key={item.label}
+                onClick={() => router.push(item.route)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  width: "100%",
+                  background: isActive ? "#e3f0ff" : "none",
+                  border: "none",
+                  color: isActive ? "#0070f3" : "#222",
+                  fontSize: "1.1rem",
+                  padding: "1rem 2rem",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  borderRadius: "0 24px 24px 0",
+                  transition: "background 0.2s, color 0.2s",
+                  boxShadow: isActive ? "0 2px 8px rgba(0,112,243,0.08)" : "none",
+                }}
+              >
+                <span style={{ fontSize: "1.3rem" }}>{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
           <button
             onClick={handleLogout}
             style={{
