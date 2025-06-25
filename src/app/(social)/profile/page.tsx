@@ -12,6 +12,9 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
   const [loading, setLoading] = useState(true);
+  const [showPopup, setShowPopup] = useState<null | "followers" | "following">(null);
+  const [popupUsers, setPopupUsers] = useState<{ name: string; profilePic: string; id: number }[]>([]);
+  const [popupLoading, setPopupLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -31,6 +34,33 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, [user, router]);
+
+  async function fetchUserSummaries(ids: number[]) {
+    setPopupLoading(true);
+    try {
+      const summaries = await Promise.all(
+        ids.map(async (id) => {
+          const res = await fetch(`http://localhost:8080/api/user/summary/${id}`);
+          const data = await res.json();
+          return { ...data, id };
+        })
+      );
+      setPopupUsers(summaries);
+    } catch (e) {
+      setPopupUsers([]);
+    }
+    setPopupLoading(false);
+  }
+
+  function handleShowFollowers() {
+    setShowPopup("followers");
+    fetchUserSummaries(profileData?.followerIds || []);
+  }
+
+  function handleShowFollowing() {
+    setShowPopup("following");
+    fetchUserSummaries(profileData?.followingIds || []);
+  }
 
   if (!user || loading) {
     return (
@@ -96,7 +126,7 @@ export default function ProfilePage() {
         </div>
         <div style={{ display: "flex", gap: "2.5rem", marginBottom: "1.5rem" }}>
           <button
-            onClick={() => alert("Under Construction")}
+            onClick={handleShowFollowers}
             style={{
               background: "none",
               border: "none",
@@ -115,7 +145,7 @@ export default function ProfilePage() {
             <span style={{ fontSize: "0.95rem" }}>Followers</span>
           </button>
           <button
-            onClick={() => alert("Under Construction")}
+            onClick={handleShowFollowing}
             style={{
               background: "none",
               border: "none",
@@ -222,6 +252,107 @@ export default function ProfilePage() {
           {activeTab === "liked" && "Your liked posts will appear here."}
         </div>
       </div>
+
+      {/* Popup for followers/following */}
+      {showPopup && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowPopup(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "12px",
+              minWidth: 320,
+              maxWidth: 380,
+              maxHeight: 480,
+              overflowY: "auto",
+              boxShadow: "0 2px 16px rgba(0,0,0,0.18)",
+              padding: "2rem 1.5rem",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginBottom: "1.5rem", color: "#0070f3" }}>
+              {showPopup === "followers" ? "Followers" : "Following"}
+            </h2>
+            {popupLoading ? (
+              <div>Loading...</div>
+            ) : popupUsers.length === 0 ? (
+              <div style={{ color: "#888" }}>No users found.</div>
+            ) : (
+              popupUsers.map((user) => (
+                <div
+                  key={user.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    marginBottom: "1.2rem",
+                    borderBottom: "1px solid #eee",
+                    paddingBottom: "0.8rem",
+                  }}
+                >
+                  <img
+                    src={user.profilePic || DEFAULT_PROFILE}
+                    alt={user.name}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      background: "#eee",
+                    }}
+                  />
+                  <span style={{ flex: 1, fontWeight: 500 }}>{user.name}</span>
+                  <button
+                    onClick={() => alert("Under Construction")}
+                    style={{
+                      background: "#0070f3",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "0.4rem 1rem",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    {showPopup === "followers" ? "Remove Follower" : "Unfollow"}
+                  </button>
+                </div>
+              ))
+            )}
+            <button
+              onClick={() => setShowPopup(null)}
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 18,
+                background: "none",
+                border: "none",
+                fontSize: "1.5rem",
+                color: "#888",
+                cursor: "pointer",
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
