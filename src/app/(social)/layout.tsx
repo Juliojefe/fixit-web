@@ -7,7 +7,7 @@ import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt, FaPlusCircl
 const sidebarItems = [
   { label: "Home", icon: <FaHome />, route: "/home" },
   { label: "Profile", icon: <FaUser />, route: "/profile" },
-  { label: "Messages", icon: <FaEnvelope />, route: "/messages" },
+  { label: "Messages", icon: <FaEnvelope />, route: "/chats" },
   { label: "Notifications", icon: <FaBell />, route: "/notifications" },
   { label: "Search", icon: <FaSearch />, route: "/search" },
   { label: "Create", icon: <FaPlusCircle />, route: "/create" },
