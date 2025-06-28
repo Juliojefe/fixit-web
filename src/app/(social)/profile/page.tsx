@@ -13,9 +13,12 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
   const [loading, setLoading] = useState(true);
   const [showPopup, setShowPopup] = useState<null | "followers" | "following">(null);
-  const [popupUsers, setPopupUsers] = useState<{ name: string; profilePic: string; id: number }[]>([]);
+  const [popupUsers, setPopupUsers] = useState<
+    { name: string; profilePic: string; id: number; follows: boolean; followsBack: boolean }[]
+  >([]);
   const [popupLoading, setPopupLoading] = useState(false);
 
+  // Fetch the logged-in user's profile data
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -35,12 +38,14 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user, router]);
 
+  // Fetch mutual info for each user in followers/following
   async function fetchUserSummaries(ids: number[]) {
+    if (!user) return;
     setPopupLoading(true);
     try {
       const summaries = await Promise.all(
         ids.map(async (id) => {
-          const res = await fetch(`http://localhost:8080/api/user/summary/${id}`);
+          const res = await fetch(`http://localhost:8080/api/follow/mutual/${user.userId}/${id}`);
           const data = await res.json();
           return { ...data, id };
         })
@@ -329,7 +334,13 @@ export default function ProfilePage() {
                       fontSize: "0.95rem",
                     }}
                   >
-                    {showPopup === "followers" ? "Remove Follower" : "Unfollow"}
+                    {user.follows && user.followsBack
+                      ? "Unfollow"
+                      : !user.follows && user.followsBack
+                      ? "Follow Back"
+                      : user.follows && !user.followsBack
+                      ? "Unfollow"
+                      : "Follow"}
                   </button>
                 </div>
               ))
