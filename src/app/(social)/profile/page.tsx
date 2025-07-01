@@ -27,7 +27,7 @@ export default function ProfilePage() {
     async function fetchProfile() {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:8080/api/user/${user?.userId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user?.userId}`);
         const data = await res.json();
         setProfileData(data);
       } catch (e) {
@@ -45,7 +45,7 @@ export default function ProfilePage() {
     try {
       const summaries = await Promise.all(
         ids.map(async (id) => {
-          const res = await fetch(`http://localhost:8080/api/follow/mutual/${user.userId}/${id}`);
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${user.userId}/${id}`);
           const data = await res.json();
           return { ...data, id };
         })
