@@ -20,7 +20,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8080/api/user/login", {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/login`, {
         email: email,
         password: password,
       });
@@ -49,7 +49,7 @@ export default function LoginPage() {
   }
 
   function handleSignInWithGoogle() {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/google`;
   }
 
   return (

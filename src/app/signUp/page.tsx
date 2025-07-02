@@ -23,7 +23,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await axios.post("http://localhost:8080/api/user/register", {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/register`, {
         name: firstName + " " + lastName,
         email: email,
         password: password,
@@ -55,7 +55,7 @@ export default function SignUpPage() {
   }
 
   function handleSignUpWithGoogle() {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/google`;
   }
 
   return (
