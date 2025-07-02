@@ -1,10 +1,20 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
+const BATCH_SIZE = 10;
+const DEBOUNCE_MS = 200;
+
+function debounce(fn: (...args: any[]) => void, ms: number) {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), ms);
+  };
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -17,6 +27,10 @@ export default function ProfilePage() {
     { name: string; profilePic: string; id: number; follows: boolean; followsBack: boolean }[]
   >([]);
   const [popupLoading, setPopupLoading] = useState(false);
+  const [popupIds, setPopupIds] = useState<number[]>([]);
+  const [popupLoadedCount, setPopupLoadedCount] = useState(0);
+
+  const popupContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch the logged-in user's profile data
   useEffect(() => {
@@ -38,33 +52,80 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user, router]);
 
-  // Fetch mutual info for each user in followers/following
-  async function fetchUserSummaries(ids: number[]) {
-    if (!user) return;
-    setPopupLoading(true);
-    try {
-      const summaries = await Promise.all(
-        ids.map(async (id) => {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${user.userId}/${id}`);
-          const data = await res.json();
-          return { ...data, id };
-        })
-      );
-      setPopupUsers(summaries);
-    } catch (e) {
-      setPopupUsers([]);
+  // Fetch a batch of user summaries in parallel
+  const fetchUserBatch = useCallback(
+    async (ids: number[]) => {
+      if (!user || ids.length === 0) return;
+      setPopupLoading(true);
+      try {
+        const batch = await Promise.all(
+          ids.map(async (id) => {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${user.userId}/${id}`
+            );
+            const data = await res.json();
+            return { ...data, id };
+          })
+        );
+        setPopupUsers((prev) => [...prev, ...batch]);
+      } catch (e) {
+        // Optionally handle error
+      }
+      setPopupLoading(false);
+    },
+    [user]
+  );
+
+  // When popup opens, reset and load first batch
+  useEffect(() => {
+    if (!showPopup || !profileData) return;
+    const ids =
+      showPopup === "followers"
+        ? profileData.followerIds || []
+        : profileData.followingIds || [];
+    setPopupIds(ids);
+    setPopupUsers([]);
+    setPopupLoadedCount(0);
+    if (ids.length > 0) {
+      fetchUserBatch(ids.slice(0, BATCH_SIZE));
+      setPopupLoadedCount(BATCH_SIZE);
     }
-    setPopupLoading(false);
-  }
+  }, [showPopup, profileData, fetchUserBatch]);
+
+  // Debounced scroll handler
+  const handleScroll = useCallback(
+    debounce(() => {
+      if (!popupContentRef.current || popupLoading) return;
+      const { scrollTop, scrollHeight, clientHeight } = popupContentRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 40) {
+        // Near bottom, load next batch
+        if (popupLoadedCount < popupIds.length) {
+          const nextBatch = popupIds.slice(popupLoadedCount, popupLoadedCount + BATCH_SIZE);
+          fetchUserBatch(nextBatch);
+          setPopupLoadedCount((prev) => prev + BATCH_SIZE);
+        }
+      }
+    }, DEBOUNCE_MS),
+    [popupLoadedCount, popupIds, popupLoading, fetchUserBatch]
+  );
+
+  // Attach scroll handler
+  useEffect(() => {
+    if (!showPopup) return;
+    const ref = popupContentRef.current;
+    if (!ref) return;
+    ref.addEventListener("scroll", handleScroll);
+    return () => {
+      ref.removeEventListener("scroll", handleScroll);
+    };
+  }, [showPopup, handleScroll]);
 
   function handleShowFollowers() {
     setShowPopup("followers");
-    fetchUserSummaries(profileData?.followerIds || []);
   }
 
   function handleShowFollowing() {
     setShowPopup("following");
-    fetchUserSummaries(profileData?.followingIds || []);
   }
 
   if (!user || loading) {
@@ -276,6 +337,7 @@ export default function ProfilePage() {
           onClick={() => setShowPopup(null)}
         >
           <div
+            ref={popupContentRef}
             style={{
               background: "#fff",
               borderRadius: "12px",
@@ -292,7 +354,7 @@ export default function ProfilePage() {
             <h2 style={{ marginBottom: "1.5rem", color: "#0070f3" }}>
               {showPopup === "followers" ? "Followers" : "Following"}
             </h2>
-            {popupLoading ? (
+            {popupUsers.length === 0 && popupLoading ? (
               <div>Loading...</div>
             ) : popupUsers.length === 0 ? (
               <div style={{ color: "#888" }}>No users found.</div>
@@ -344,6 +406,11 @@ export default function ProfilePage() {
                   </button>
                 </div>
               ))
+            )}
+            {popupLoading && popupUsers.length > 0 && (
+              <div style={{ textAlign: "center", color: "#888", margin: "1rem 0" }}>
+                Loading more...
+              </div>
             )}
             <button
               onClick={() => setShowPopup(null)}
