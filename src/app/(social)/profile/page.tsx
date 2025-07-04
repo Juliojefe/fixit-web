@@ -30,6 +30,9 @@ export default function ProfilePage() {
   const [popupLoading, setPopupLoading] = useState(false);
   const [popupIds, setPopupIds] = useState<number[]>([]);
   const [popupLoadedCount, setPopupLoadedCount] = useState(0);
+  const [pendingActions, setPendingActions] = useState<
+    { id: number; action: "follow" | "unfollow" }[]
+  >([]);
 
   const popupContentRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +45,7 @@ export default function ProfilePage() {
     async function fetchProfile() {
       setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user?.userId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${currentUserId}`);
         const data = await res.json();
         setProfileData(data);
       } catch (e) {
@@ -62,7 +65,7 @@ export default function ProfilePage() {
         const batch = await Promise.all(
           ids.map(async (id) => {
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${user.userId}/${id}`
+              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${currentUserId}/${id}`
             );
             const data = await res.json();
             return { ...data, id };
@@ -128,6 +131,40 @@ export default function ProfilePage() {
   function handleShowFollowing() {
     setShowPopup("following");
   }
+
+  const handleClosePopup = () => {
+    if (pendingActions.length > 0) {
+      setProfileData((prev: any) => {
+        let newData = { ...prev };
+        pendingActions.forEach(({ id, action }) => {
+          if (showPopup === "following") {
+            if (action === "follow" && !newData.followingIds.includes(id)) {
+              newData.followingIds = [...newData.followingIds, id];
+              newData.followingCount = (newData.followingCount || 0) + 1;
+            }
+            if (action === "unfollow" && newData.followingIds.includes(id)) {
+              newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
+              newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
+            }
+          }
+          if (showPopup === "followers") {
+            // Only update follows (not followerIds), since you can't remove a follower here
+            if (action === "follow" && !newData.followingIds.includes(id)) {
+              newData.followingIds = [...newData.followingIds, id];
+              newData.followingCount = (newData.followingCount || 0) + 1;
+            }
+            if (action === "unfollow" && newData.followingIds.includes(id)) {
+              newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
+              newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
+            }
+          }
+        });
+        return newData;
+      });
+      setPendingActions([]);
+    }
+    setShowPopup(null);
+  };
 
   if (!user || loading) {
     return (
@@ -386,33 +423,35 @@ export default function ProfilePage() {
                   <span style={{ flex: 1, fontWeight: 500 }}>{user.name}</span>
                   <button
                     onClick={async () => {
-                      if (!user) return;
+                      if (!currentUserId) return;
                       let url = "";
                       let method: "POST" | "DELETE" = "POST";
                       let newFollows = user.follows;
-                      // Determine action
+                      let action: "follow" | "unfollow" = user.follows ? "unfollow" : "follow";
+
                       if (user.follows) {
-                        // Unfollow
                         url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/unfollow/${user.id}`;
                         method = "DELETE";
                         newFollows = false;
                       } else {
-                        // Follow
                         url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/follow/${user.id}`;
                         method = "POST";
                         newFollows = true;
                       }
+
                       try {
                         const res = await fetch(url, { method });
                         const success = await res.json();
                         if (success) {
                           setPopupUsers((prev) =>
                             prev.map((u, i) =>
-                              i === idx
-                                ? { ...u, follows: newFollows }
-                                : u
+                              i === idx ? { ...u, follows: newFollows } : u
                             )
                           );
+                          setPendingActions((prev) => [
+                            ...prev.filter((a) => a.id !== user.id),
+                            { id: user.id, action },
+                          ]);
                         }
                       } catch (e) {
                         // Optionally show error
@@ -446,7 +485,7 @@ export default function ProfilePage() {
               </div>
             )}
             <button
-              onClick={() => setShowPopup(null)}
+              onClick={handleClosePopup}
               style={{
                 position: "absolute",
                 top: 12,
