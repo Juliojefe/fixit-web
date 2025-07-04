@@ -19,6 +19,7 @@ function debounce(fn: (...args: any[]) => void, ms: number) {
 export default function ProfilePage() {
   const router = useRouter();
   const { user } = useUser();
+  const currentUserId = user?.userId;
   const [profileData, setProfileData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
   const [loading, setLoading] = useState(true);
@@ -359,7 +360,7 @@ export default function ProfilePage() {
             ) : popupUsers.length === 0 ? (
               <div style={{ color: "#888" }}>No users found.</div>
             ) : (
-              popupUsers.map((user) => (
+              popupUsers.map((user, idx) => (
                 <div
                   key={user.id}
                   style={{
@@ -384,10 +385,42 @@ export default function ProfilePage() {
                   />
                   <span style={{ flex: 1, fontWeight: 500 }}>{user.name}</span>
                   <button
-                    onClick={() => alert("Under Construction")}
+                    onClick={async () => {
+                      if (!user) return;
+                      let url = "";
+                      let method: "POST" | "DELETE" = "POST";
+                      let newFollows = user.follows;
+                      // Determine action
+                      if (user.follows) {
+                        // Unfollow
+                        url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/unfollow/${user.id}`;
+                        method = "DELETE";
+                        newFollows = false;
+                      } else {
+                        // Follow
+                        url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/follow/${user.id}`;
+                        method = "POST";
+                        newFollows = true;
+                      }
+                      try {
+                        const res = await fetch(url, { method });
+                        const success = await res.json();
+                        if (success) {
+                          setPopupUsers((prev) =>
+                            prev.map((u, i) =>
+                              i === idx
+                                ? { ...u, follows: newFollows }
+                                : u
+                            )
+                          );
+                        }
+                      } catch (e) {
+                        // Optionally show error
+                      }
+                    }}
                     style={{
-                      background: "#0070f3",
-                      color: "#fff",
+                      background: user.follows ? "#eee" : "#0070f3",
+                      color: user.follows ? "#222" : "#fff",
                       border: "none",
                       borderRadius: "6px",
                       padding: "0.4rem 1rem",
@@ -397,11 +430,11 @@ export default function ProfilePage() {
                     }}
                   >
                     {user.follows && user.followsBack
-                      ? "Unfollow"
+                      ? "Following"
                       : !user.follows && user.followsBack
                       ? "Follow Back"
                       : user.follows && !user.followsBack
-                      ? "Unfollow"
+                      ? "Following"
                       : "Follow"}
                   </button>
                 </div>
