@@ -307,44 +307,73 @@ export default function ProfilePage() {
               userIds={popupUserIds}
               currentUserId={currentUserId!}
               renderUser={(user, idx, handleAction) => (
-                <div key={user.id}>
-                  <img
-                    src={user.profilePic || DEFAULT_PROFILE}
-                    alt={user.name}
+                <div
+                  key={user.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    marginBottom: "1.2rem",
+                    borderBottom: "1px solid #eee",
+                    paddingBottom: "0.8rem",
+                    paddingTop: idx === 0 ? "0" : "0.8rem",
+                    minHeight: 56,
+                  }}
+                >
+                  <div
                     style={{
                       width: 40,
                       height: 40,
                       borderRadius: "50%",
-                      objectFit: "cover",
-                      background: "#eee",
+                      background: "#bbb",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                      fontSize: "1.1rem",
+                      color: "#fff",
+                      flexShrink: 0,
                     }}
-                  />
-                  <span style={{ flex: 1, fontWeight: 500 }}>{user.name}</span>
+                  >
+                    {user.profilePic ? (
+                      <img
+                        src={user.profilePic}
+                        alt={user.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      (user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U")
+                    )}
+                  </div>
+                  <span style={{ flex: 1, fontWeight: 500, fontSize: "1.05rem", color: "#222" }}>
+                    {user.name}
+                  </span>
                   <button
                     onClick={() =>
                       handleAction(
                         user.follows ? "unfollow" : "follow",
                         user,
                         idx
-                      ).then(() => {
-                        setPendingActions((prev) => [
-                          ...prev.filter((a) => a.id !== user.id),
-                          {
-                            id: user.id,
-                            action: user.follows ? "unfollow" : "follow",
-                          },
-                        ]);
-                      })
+                      )
                     }
                     style={{
                       background: user.follows ? "#eee" : "#0070f3",
                       color: user.follows ? "#222" : "#fff",
                       border: "none",
-                      borderRadius: "6px",
-                      padding: "0.4rem 1rem",
+                      borderRadius: "8px",
+                      padding: "0.4rem 1.2rem",
                       fontWeight: "bold",
                       cursor: "pointer",
-                      fontSize: "0.95rem",
+                      fontSize: "1rem",
+                      minWidth: 90,
+                      textAlign: "center",
+                      boxShadow: user.follows ? "none" : "0 1px 4px rgba(0,0,0,0.04)",
+                      transition: "background 0.2s, color 0.2s",
                     }}
                   >
                     {user.follows && user.followsBack
