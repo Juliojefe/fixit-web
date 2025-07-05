@@ -2,13 +2,14 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 import { useEffect } from "react";
-import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt, FaPlusCircle } from "react-icons/fa";
+import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt, FaPlusCircle, FaCompass } from "react-icons/fa";
 
 const sidebarItems = [
   { label: "Home", icon: <FaHome />, route: "/home" },
   { label: "Profile", icon: <FaUser />, route: "/profile" },
   { label: "Messages", icon: <FaEnvelope />, route: "/chats" },
   { label: "Notifications", icon: <FaBell />, route: "/notifications" },
+  { label: "Explore", icon: <FaCompass />, route: "/explore" }, // <-- Added Explore
   { label: "Search", icon: <FaSearch />, route: "/search" },
   { label: "Create", icon: <FaPlusCircle />, route: "/create" },
 ];
