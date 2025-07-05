@@ -1,20 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import UserSummaryList from "@/components/UserSummaryList";
 
 const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
-const BATCH_SIZE = 10;
-const DEBOUNCE_MS = 200;
-
-function debounce(fn: (...args: any[]) => void, ms: number) {
-  let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
-}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -24,17 +15,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
   const [loading, setLoading] = useState(true);
   const [showPopup, setShowPopup] = useState<null | "followers" | "following">(null);
-  const [popupUsers, setPopupUsers] = useState<
-    { name: string; profilePic: string; id: number; follows: boolean; followsBack: boolean }[]
-  >([]);
-  const [popupLoading, setPopupLoading] = useState(false);
-  const [popupIds, setPopupIds] = useState<number[]>([]);
-  const [popupLoadedCount, setPopupLoadedCount] = useState(0);
   const [pendingActions, setPendingActions] = useState<
     { id: number; action: "follow" | "unfollow" }[]
   >([]);
-
-  const popupContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch the logged-in user's profile data
   useEffect(() => {
@@ -54,75 +37,7 @@ export default function ProfilePage() {
       setLoading(false);
     }
     fetchProfile();
-  }, [user, router]);
-
-  // Fetch a batch of user summaries in parallel
-  const fetchUserBatch = useCallback(
-    async (ids: number[]) => {
-      if (!user || ids.length === 0) return;
-      setPopupLoading(true);
-      try {
-        const batch = await Promise.all(
-          ids.map(async (id) => {
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${currentUserId}/${id}`
-            );
-            const data = await res.json();
-            return { ...data, id };
-          })
-        );
-        setPopupUsers((prev) => [...prev, ...batch]);
-      } catch (e) {
-        // Optionally handle error
-      }
-      setPopupLoading(false);
-    },
-    [user]
-  );
-
-  // When popup opens, reset and load first batch
-  useEffect(() => {
-    if (!showPopup || !profileData) return;
-    const ids =
-      showPopup === "followers"
-        ? profileData.followerIds || []
-        : profileData.followingIds || [];
-    setPopupIds(ids);
-    setPopupUsers([]);
-    setPopupLoadedCount(0);
-    if (ids.length > 0) {
-      fetchUserBatch(ids.slice(0, BATCH_SIZE));
-      setPopupLoadedCount(BATCH_SIZE);
-    }
-  }, [showPopup, profileData, fetchUserBatch]);
-
-  // Debounced scroll handler
-  const handleScroll = useCallback(
-    debounce(() => {
-      if (!popupContentRef.current || popupLoading) return;
-      const { scrollTop, scrollHeight, clientHeight } = popupContentRef.current;
-      if (scrollTop + clientHeight >= scrollHeight - 40) {
-        // Near bottom, load next batch
-        if (popupLoadedCount < popupIds.length) {
-          const nextBatch = popupIds.slice(popupLoadedCount, popupLoadedCount + BATCH_SIZE);
-          fetchUserBatch(nextBatch);
-          setPopupLoadedCount((prev) => prev + BATCH_SIZE);
-        }
-      }
-    }, DEBOUNCE_MS),
-    [popupLoadedCount, popupIds, popupLoading, fetchUserBatch]
-  );
-
-  // Attach scroll handler
-  useEffect(() => {
-    if (!showPopup) return;
-    const ref = popupContentRef.current;
-    if (!ref) return;
-    ref.addEventListener("scroll", handleScroll);
-    return () => {
-      ref.removeEventListener("scroll", handleScroll);
-    };
-  }, [showPopup, handleScroll]);
+  }, [user, router, currentUserId]);
 
   function handleShowFollowers() {
     setShowPopup("followers");
@@ -132,23 +47,13 @@ export default function ProfilePage() {
     setShowPopup("following");
   }
 
+  // When popup closes, update followingIds/count based on actions taken in popup
   const handleClosePopup = () => {
     if (pendingActions.length > 0) {
       setProfileData((prev: any) => {
         let newData = { ...prev };
         pendingActions.forEach(({ id, action }) => {
-          if (showPopup === "following") {
-            if (action === "follow" && !newData.followingIds.includes(id)) {
-              newData.followingIds = [...newData.followingIds, id];
-              newData.followingCount = (newData.followingCount || 0) + 1;
-            }
-            if (action === "unfollow" && newData.followingIds.includes(id)) {
-              newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
-              newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
-            }
-          }
-          if (showPopup === "followers") {
-            // Only update follows (not followerIds), since you can't remove a follower here
+          if (showPopup === "following" || showPopup === "followers") {
             if (action === "follow" && !newData.followingIds.includes(id)) {
               newData.followingIds = [...newData.followingIds, id];
               newData.followingCount = (newData.followingCount || 0) + 1;
@@ -185,6 +90,14 @@ export default function ProfilePage() {
 
   const profilePic =
     user.profilePic && user.profilePic !== "" ? user.profilePic : DEFAULT_PROFILE;
+
+  // Choose which IDs to show in the popup
+  const popupUserIds =
+    showPopup === "followers"
+      ? profileData?.followerIds || []
+      : showPopup === "following"
+      ? profileData?.followingIds || []
+      : [];
 
   return (
     <div
@@ -349,7 +262,6 @@ export default function ProfilePage() {
             Liked
           </button>
         </div>
-        {/* Skeleton content for each tab */}
         <div style={{ color: "#888", fontSize: "1.1rem", minHeight: 80 }}>
           {activeTab === "posts" && "Your posts will appear here."}
           {activeTab === "saved" && "Your saved posts will appear here."}
@@ -375,7 +287,6 @@ export default function ProfilePage() {
           onClick={() => setShowPopup(null)}
         >
           <div
-            ref={popupContentRef}
             style={{
               background: "#fff",
               borderRadius: "12px",
@@ -392,14 +303,12 @@ export default function ProfilePage() {
             <h2 style={{ marginBottom: "1.5rem", color: "#0070f3" }}>
               {showPopup === "followers" ? "Followers" : "Following"}
             </h2>
-            {popupUsers.length === 0 && popupLoading ? (
-              <div>Loading...</div>
-            ) : popupUsers.length === 0 ? (
-              <div style={{ color: "#888" }}>No users found.</div>
-            ) : (
-              popupUsers.map((user, idx) => (
+            <UserSummaryList
+              userIds={popupUserIds}
+              currentUserId={currentUserId!}
+              renderUser={(user, idx, handleAction) => (
                 <div
-                  key={user.id}
+                  key={`${user.id}-${idx}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -422,41 +331,21 @@ export default function ProfilePage() {
                   />
                   <span style={{ flex: 1, fontWeight: 500 }}>{user.name}</span>
                   <button
-                    onClick={async () => {
-                      if (!currentUserId) return;
-                      let url = "";
-                      let method: "POST" | "DELETE" = "POST";
-                      let newFollows = user.follows;
-                      let action: "follow" | "unfollow" = user.follows ? "unfollow" : "follow";
-
-                      if (user.follows) {
-                        url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/unfollow/${user.id}`;
-                        method = "DELETE";
-                        newFollows = false;
-                      } else {
-                        url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/follow/${user.id}`;
-                        method = "POST";
-                        newFollows = true;
-                      }
-
-                      try {
-                        const res = await fetch(url, { method });
-                        const success = await res.json();
-                        if (success) {
-                          setPopupUsers((prev) =>
-                            prev.map((u, i) =>
-                              i === idx ? { ...u, follows: newFollows } : u
-                            )
-                          );
-                          setPendingActions((prev) => [
-                            ...prev.filter((a) => a.id !== user.id),
-                            { id: user.id, action },
-                          ]);
-                        }
-                      } catch (e) {
-                        // Optionally show error
-                      }
-                    }}
+                    onClick={() =>
+                      handleAction(
+                        user.follows ? "unfollow" : "follow",
+                        user,
+                        idx
+                      ).then(() => {
+                        setPendingActions((prev) => [
+                          ...prev.filter((a) => a.id !== user.id),
+                          {
+                            id: user.id,
+                            action: user.follows ? "unfollow" : "follow",
+                          },
+                        ]);
+                      })
+                    }
                     style={{
                       background: user.follows ? "#eee" : "#0070f3",
                       color: user.follows ? "#222" : "#fff",
@@ -477,13 +366,8 @@ export default function ProfilePage() {
                       : "Follow"}
                   </button>
                 </div>
-              ))
-            )}
-            {popupLoading && popupUsers.length > 0 && (
-              <div style={{ textAlign: "center", color: "#888", margin: "1rem 0" }}>
-                Loading more...
-              </div>
-            )}
+              )}
+            />
             <button
               onClick={handleClosePopup}
               style={{
