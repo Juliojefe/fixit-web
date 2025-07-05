@@ -47,8 +47,8 @@ export default function ExplorePage() {
           borderRadius: "16px",
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
           padding: "2.5rem 2.5rem 2rem 2.5rem",
-          minWidth: 340,
-          maxWidth: 420,
+          minWidth: 420,
+          maxWidth: 600,
           width: "100%",
           marginBottom: "2rem",
           display: "flex",
@@ -67,7 +67,17 @@ export default function ExplorePage() {
         >
           Explore Users
         </h1>
-        <div style={{ width: "100%" }}>
+        <div
+          style={{
+            width: "100%",
+            maxHeight: 480,
+            overflowY: "auto",
+            borderRadius: 12,
+            border: "1px solid #f0f0f0",
+            background: "#fafbfc",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+          }}
+        >
           {loading ? (
             <div style={{ textAlign: "center", color: "#888", padding: "2rem 0" }}>
               Loading users...
