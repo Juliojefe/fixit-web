@@ -307,17 +307,7 @@ export default function ProfilePage() {
               userIds={popupUserIds}
               currentUserId={currentUserId!}
               renderUser={(user, idx, handleAction) => (
-                <div
-                  key={`${user.id}-${idx}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    marginBottom: "1.2rem",
-                    borderBottom: "1px solid #eee",
-                    paddingBottom: "0.8rem",
-                  }}
-                >
+                <div key={user.id}>
                   <img
                     src={user.profilePic || DEFAULT_PROFILE}
                     alt={user.name}

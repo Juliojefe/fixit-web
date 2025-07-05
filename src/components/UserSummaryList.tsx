@@ -46,7 +46,6 @@ export default function UserSummaryList({
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Fetch a batch of user summaries in parallel
   const fetchUserBatch = useCallback(
     async (ids: number[]) => {
       if (!currentUserId || ids.length === 0) return;
@@ -61,11 +60,15 @@ export default function UserSummaryList({
             return { ...data, id };
           })
         );
-        setUsers((prev) => [...prev, ...batch]);
+        setUsers((prev) => [
+          ...prev,
+          ...batch.filter((newUser) => !prev.some((u) => u.id === newUser.id)),
+        ]);
       } catch (e) {
-        // Optionally handle error
+        // handle error
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     },
     [currentUserId]
   );
@@ -152,11 +155,9 @@ export default function UserSummaryList({
       ) : users.length === 0 ? (
         <div style={{ color: "#888" }}>No users found.</div>
       ) : (
-        users.map((user, idx) => (
-          <div key={`${user.id}-${idx}`}>
-            {renderUser(user, idx, handleAction)}
-          </div>
-        ))
+        users.map((user, idx) =>
+          renderUser(user, idx, handleAction)
+        )
       )}
       {loading && users.length > 0 && (
         <div style={{ textAlign: "center", color: "#888", margin: "1rem 0" }}>
