@@ -62,8 +62,6 @@ export default function ProfilePage() {
             newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
             newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
           }
-          // Optionally, update followerIds/followerCount if you allow removing followers
-          // if (showPopup === "followers") { ... }
         });
         return newData;
       });
