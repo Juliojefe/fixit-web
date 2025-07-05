@@ -53,16 +53,17 @@ export default function ProfilePage() {
       setProfileData((prev: any) => {
         let newData = { ...prev };
         pendingActions.forEach(({ id, action }) => {
-          if (showPopup === "following" || showPopup === "followers") {
-            if (action === "follow" && !newData.followingIds.includes(id)) {
-              newData.followingIds = [...newData.followingIds, id];
-              newData.followingCount = (newData.followingCount || 0) + 1;
-            }
-            if (action === "unfollow" && newData.followingIds.includes(id)) {
-              newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
-              newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
-            }
+          // Update followingIds and followingCount for both popups
+          if (action === "follow" && !newData.followingIds.includes(id)) {
+            newData.followingIds = [...newData.followingIds, id];
+            newData.followingCount = (newData.followingCount || 0) + 1;
           }
+          if (action === "unfollow" && newData.followingIds.includes(id)) {
+            newData.followingIds = newData.followingIds.filter((fid: number) => fid !== id);
+            newData.followingCount = Math.max((newData.followingCount || 1) - 1, 0);
+          }
+          // Optionally, update followerIds/followerCount if you allow removing followers
+          // if (showPopup === "followers") { ... }
         });
         return newData;
       });
@@ -352,13 +353,18 @@ export default function ProfilePage() {
                     {user.name}
                   </span>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       handleAction(
                         user.follows ? "unfollow" : "follow",
                         user,
                         idx
-                      )
-                    }
+                      ).then(() => {
+                        setPendingActions((prev) => [
+                          ...prev.filter((a) => a.id !== user.id),
+                          { id: user.id, action: user.follows ? "unfollow" : "follow" },
+                        ]);
+                      });
+                    }}
                     style={{
                       background: user.follows ? "#eee" : "#0070f3",
                       color: user.follows ? "#222" : "#fff",
