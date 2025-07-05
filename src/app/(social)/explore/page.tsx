@@ -30,15 +30,21 @@ export default function ExplorePage() {
     if (currentUserId) fetchUserIds();
   }, [currentUserId]);
 
+  // HEIGHTS
+  const CARD_HEIGHT = 700; // px, adjust as needed
+  const HEADER_HEIGHT = 80; // px, adjust if you change h1/padding
+
   return (
     <div
       style={{
+        height: "100vh",
         minHeight: "100vh",
         background: "#f5f6fa",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: "2.5rem",
+        justifyContent: "center", // center vertically
+        overflow: "hidden", // prevent page scroll
       }}
     >
       <div
@@ -50,10 +56,11 @@ export default function ExplorePage() {
           minWidth: 420,
           maxWidth: 600,
           width: "100%",
-          marginBottom: "2rem",
+          height: CARD_HEIGHT,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "flex-start",
         }}
       >
         <h1
@@ -63,6 +70,8 @@ export default function ExplorePage() {
             fontSize: "2rem",
             marginBottom: "1.5rem",
             letterSpacing: "0.5px",
+            height: 40,
+            lineHeight: "40px",
           }}
         >
           Explore Users
@@ -70,12 +79,13 @@ export default function ExplorePage() {
         <div
           style={{
             width: "100%",
-            maxHeight: 480,
+            flex: 1,
             overflowY: "auto",
             borderRadius: 12,
             border: "1px solid #f0f0f0",
             background: "#fafbfc",
             boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+            minHeight: 0, // for flexbox scroll
           }}
         >
           {loading ? (
