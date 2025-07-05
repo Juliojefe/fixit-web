@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
+const DEFAULT_PROFILE = "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
+
 const BATCH_SIZE = 10;
 const DEBOUNCE_MS = 200;
 

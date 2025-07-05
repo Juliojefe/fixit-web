@@ -333,22 +333,20 @@ export default function ProfilePage() {
                       fontSize: "1.1rem",
                       color: "#fff",
                       flexShrink: 0,
+                      overflow: "hidden",
                     }}
                   >
-                    {user.profilePic ? (
-                      <img
-                        src={user.profilePic}
-                        alt={user.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      (user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U")
-                    )}
+                    <img
+                      src={user.profilePic && user.profilePic !== "" ? user.profilePic : DEFAULT_PROFILE}
+                      alt={user.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
                   </div>
                   <span style={{ flex: 1, fontWeight: 500, fontSize: "1.05rem", color: "#222" }}>
                     {user.name}
