@@ -61,7 +61,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch(`/api/post/${id}`);
+            const res = await fetch (`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`)
             const data = await res.json();
             return { ...data, id };
           })
