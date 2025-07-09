@@ -40,7 +40,15 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f5f6fa" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        height: "100vh", // Ensure full viewport height
+        background: "#f5f6fa",
+        overflow: "hidden", // Prevent unwanted scroll
+      }}
+    >
       {/* Sidebar */}
       <aside
         style={{
@@ -120,7 +128,7 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {/* Top Bar */}
         <div
           style={{
