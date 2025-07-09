@@ -31,7 +31,7 @@ export default function ExplorePage() {
   }, [currentUserId]);
 
   // HEIGHTS
-  const CARD_HEIGHT = 700; // px, adjust as needed
+  const CARD_HEIGHT = 600; // px, adjust as needed
   const HEADER_HEIGHT = 80; // px, adjust if you change h1/padding
 
   return (
@@ -61,6 +61,7 @@ export default function ExplorePage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
+          marginTop: "-110px", // Move card up or down
         }}
       >
         <h1
