@@ -119,7 +119,10 @@ export default function ProfilePage() {
 
   return (
     <div
+      className="hide-scrollbar"
       style={{
+        height: "100%",
+        overflowY: "auto",
         minHeight: "100vh",
         background: "#f5f6fa",
         color: "#222",
