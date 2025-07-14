@@ -80,8 +80,6 @@ export default function ExplorePage() {
         <div
           style={{
             width: "100%",
-            flex: 1,
-            overflowY: "auto",
             borderRadius: 12,
             border: "1px solid #f0f0f0",
             background: "#fafbfc",
