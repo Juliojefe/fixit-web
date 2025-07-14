@@ -120,7 +120,10 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
         width: "100%",
         padding: 0,
         background: "none",
+        scrollbarWidth: "none", // Firefox
+        msOverflowStyle: "none", // IE/Edge
       }}
+      className="hide-scrollbar"
     >
       {posts.map((post) => (
         <div
