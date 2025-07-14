@@ -44,9 +44,9 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
       style={{
         display: "flex",
         minHeight: "100vh",
-        height: "100vh", // Ensure full viewport height
+        // height: "100vh", // Ensure full viewport height
         background: "#f5f6fa",
-        overflow: "hidden", // Prevent unwanted scroll
+        // overflow: "hidden", // Prevent unwanted scroll
       }}
     >
       {/* Sidebar */}
@@ -128,7 +128,15 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <main
+        style={{
+          flex: 1,
+          overflow: "hidden",      // Prevent scroll by default
+          height: "100vh",         // Lock to viewport height
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Top Bar */}
         <div
           style={{
@@ -161,7 +169,9 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
           />
         </div>
         {/* Page Content */}
-        <div style={{ flex: 1 }}>{children}</div>
+        <div style={{ flex: 1, height: "100%", overflow: "hidden" }}>
+          {children}
+        </div>
       </main>
     </div>
   );

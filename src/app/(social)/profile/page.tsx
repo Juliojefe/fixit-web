@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
 import React, { useEffect, useState } from "react";
 import UserSummaryList from "@/components/UserSummaryList";
+import PostSummaryList from "@/components/PostSummaryList";
 
 const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
@@ -18,6 +19,8 @@ export default function ProfilePage() {
   const [pendingActions, setPendingActions] = useState<
     { id: number; action: "follow" | "unfollow" }[]
   >([]);
+  const [tabPostIds, setTabPostIds] = useState<number[]>([]);
+  const [tabLoading, setTabLoading] = useState(false);
 
   // Fetch the logged-in user's profile data
   useEffect(() => {
@@ -38,6 +41,22 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, [user, router, currentUserId]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    let endpoint = "";
+    if (activeTab === "posts") endpoint = `/api/post/owned-post-by-userId/${currentUserId}`;
+    if (activeTab === "liked") endpoint = `/api/post/liked-post-by-userId/${currentUserId}`;
+    if (activeTab === "saved") endpoint = `/api/post/saved-post-by-userId/${currentUserId}`;
+    if (!endpoint) return;
+
+    setTabLoading(true);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`)
+      .then((res) => res.json())
+      .then((data) => setTabPostIds(Array.isArray(data) ? data : []))
+      .catch(() => setTabPostIds([]))
+      .finally(() => setTabLoading(false));
+  }, [activeTab, currentUserId]);
 
   function handleShowFollowers() {
     setShowPopup("followers");
@@ -100,7 +119,10 @@ export default function ProfilePage() {
 
   return (
     <div
+      className="hide-scrollbar"
       style={{
+        height: "100%",
+        overflowY: "auto",
         minHeight: "100vh",
         background: "#f5f6fa",
         color: "#222",
@@ -265,6 +287,46 @@ export default function ProfilePage() {
           {activeTab === "posts" && "Your posts will appear here."}
           {activeTab === "saved" && "Your saved posts will appear here."}
           {activeTab === "liked" && "Your liked posts will appear here."}
+        </div>
+        <div
+          style={{
+            width: "100%",
+            minHeight: 400,
+            background: "#fafbfc",
+            borderRadius: 12,
+            border: "1px solid #f0f0f0",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+            marginBottom: "1rem",
+            transition: "height 0.2s",
+          }}
+        >
+          {tabLoading ? (
+            <div
+              style={{
+                color: "#888",
+                fontSize: "1.1rem",
+                textAlign: "center",
+                padding: "2rem 0",
+              }}
+            >
+              Loading...
+            </div>
+          ) : tabPostIds.length === 0 ? (
+            <div
+              style={{
+                color: "#888",
+                fontSize: "1.1rem",
+                textAlign: "center",
+                padding: "2rem 0",
+              }}
+            >
+              {activeTab === "posts" && "Your posts will appear here."}
+              {activeTab === "saved" && "Your saved posts will appear here."}
+              {activeTab === "liked" && "Your liked posts will appear here."}
+            </div>
+          ) : (
+            <PostSummaryList postIds={tabPostIds} currentUserId={currentUserId ?? 0} />
+          )}
         </div>
       </div>
 

@@ -150,7 +150,7 @@ export default function UserSummaryList({
         maxHeight: 480,
         ...style,
       }}
-      className={className}
+      className={`hide-scrollbar${className ? " " + className : ""}`}
     >
       {users.length === 0 && loading ? (
         <div>Loading...</div>
