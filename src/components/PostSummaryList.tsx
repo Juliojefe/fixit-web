@@ -156,6 +156,16 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
       );
       if (await res.json()) {
         setSaved((prev) => ({ ...prev, [postId]: true }));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  savedIds: [...(post.savedIds || []), currentUserId],
+                }
+              : post
+          )
+        );
       }
     } else {
       // Unsave post
@@ -165,6 +175,16 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
       );
       if (await res.json()) {
         setSaved((prev) => ({ ...prev, [postId]: false }));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  savedIds: (post.savedIds || []).filter((id) => id !== currentUserId),
+                }
+              : post
+          )
+        );
       }
     }
   };
