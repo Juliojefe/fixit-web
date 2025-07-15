@@ -13,6 +13,7 @@ type PostSummary = {
   commentIds: number[];
   commentCount: number;
   imageUrls: string[];
+  savedIds: number[];
 };
 
 type PostSummaryListProps = {
@@ -61,7 +62,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch (`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`);
             const data = await res.json();
             return { ...data, id };
           })
@@ -70,13 +71,26 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
           ...prev,
           ...batch.filter((newPost) => !prev.some((p) => p.id === newPost.id)),
         ]);
+        // Initialize liked and saved state based on loaded posts
+        setLiked((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            batch.map((post) => [post.id, Array.isArray(post.likeIds) && post.likeIds.includes(currentUserId)])
+          ),
+        }));
+        setSaved((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            batch.map((post) => [post.id, Array.isArray(post.savedIds) && post.savedIds.includes(currentUserId)])
+          ),
+        }));
       } catch (e) {
         // handle error
       } finally {
         setLoading(false);
       }
     },
-    []
+    [currentUserId]
   );
 
   // Load first batch on mount or when postIds change
@@ -109,6 +123,71 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     ref.addEventListener("scroll", handleScroll);
     return () => ref.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
+
+  // Add these async handlers inside your component:
+  const handleLike = async (postId: number) => {
+    if (!liked[postId]) {
+      // Like post
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/like-post/${postId}/${currentUserId}`,
+        { method: "POST" }
+      );
+      if (await res.json()) {
+        setLiked((prev) => ({ ...prev, [postId]: true }));
+      }
+    } else {
+      // Unlike post
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/unlike-post/${postId}/${currentUserId}`,
+        { method: "DELETE" }
+      );
+      if (await res.json()) {
+        setLiked((prev) => ({ ...prev, [postId]: false }));
+      }
+    }
+  };
+
+  const handleSave = async (postId: number) => {
+    if (!saved[postId]) {
+      // Save post
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/save-post/${postId}/${currentUserId}`,
+        { method: "POST" }
+      );
+      if (await res.json()) {
+        setSaved((prev) => ({ ...prev, [postId]: true }));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  savedIds: [...(post.savedIds || []), currentUserId],
+                }
+              : post
+          )
+        );
+      }
+    } else {
+      // Unsave post
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/unSave-post/${postId}/${currentUserId}`,
+        { method: "DELETE" }
+      );
+      if (await res.json()) {
+        setSaved((prev) => ({ ...prev, [postId]: false }));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  savedIds: (post.savedIds || []).filter((id) => id !== currentUserId),
+                }
+              : post
+          )
+        );
+      }
+    }
+  };
 
   // UI
   return (
@@ -267,12 +346,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
           <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "1rem 1.2rem 0.2rem 1.2rem" }}>
             <span
               style={{ cursor: "pointer" }}
-              onClick={() =>
-                setLiked((prev) => ({
-                  ...prev,
-                  [post.id]: !prev[post.id],
-                }))
-              }
+              onClick={() => handleLike(post.id)}
             >
               {liked[post.id] ? (
                 <FaHeart color="#e74c3c" size={22} />
@@ -285,12 +359,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
             </span>
             <span
               style={{ cursor: "pointer", marginLeft: "auto" }}
-              onClick={() =>
-                setSaved((prev) => ({
-                  ...prev,
-                  [post.id]: !prev[post.id],
-                }))
-              }
+              onClick={() => handleSave(post.id)}
             >
               {saved[post.id] ? (
                 <FaBookmark color="#0070f3" size={20} />
