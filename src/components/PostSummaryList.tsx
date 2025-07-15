@@ -13,6 +13,7 @@ type PostSummary = {
   commentIds: number[];
   commentCount: number;
   imageUrls: string[];
+  savedIds: number[];
 };
 
 type PostSummaryListProps = {
@@ -61,7 +62,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch (`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`);
             const data = await res.json();
             return { ...data, id };
           })
@@ -70,13 +71,26 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
           ...prev,
           ...batch.filter((newPost) => !prev.some((p) => p.id === newPost.id)),
         ]);
+        // Initialize liked and saved state based on loaded posts
+        setLiked((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            batch.map((post) => [post.id, Array.isArray(post.likeIds) && post.likeIds.includes(currentUserId)])
+          ),
+        }));
+        setSaved((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            batch.map((post) => [post.id, Array.isArray(post.savedIds) && post.savedIds.includes(currentUserId)])
+          ),
+        }));
       } catch (e) {
         // handle error
       } finally {
         setLoading(false);
       }
     },
-    []
+    [currentUserId]
   );
 
   // Load first batch on mount or when postIds change
