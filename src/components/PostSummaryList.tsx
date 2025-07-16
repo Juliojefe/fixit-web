@@ -126,24 +126,51 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
 
   // Add these async handlers inside your component:
   const handleLike = async (postId: number) => {
-    if (!liked[postId]) {
-      // Like post
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/like-post/${postId}/${currentUserId}`,
-        { method: "POST" }
-      );
-      if (await res.json()) {
-        setLiked((prev) => ({ ...prev, [postId]: true }));
+    const wasLiked = liked[postId];
+    // Optimistically update UI
+    setLiked((prev) => ({ ...prev, [postId]: !wasLiked }));
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              likeCount: post.likeCount + (!wasLiked ? 1 : -1),
+              likeIds: !wasLiked
+                ? [...(post.likeIds || []), currentUserId]
+                : (post.likeIds || []).filter((id) => id !== currentUserId),
+            }
+          : post
+      )
+    );
+
+    try {
+      if (!wasLiked) {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/post/like-post/${postId}/${currentUserId}`,
+          { method: "POST" }
+        );
+      } else {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/post/unlike-post/${postId}/${currentUserId}`,
+          { method: "DELETE" }
+        );
       }
-    } else {
-      // Unlike post
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/unlike-post/${postId}/${currentUserId}`,
-        { method: "DELETE" }
+    } catch (e) {
+      // Revert if API fails
+      setLiked((prev) => ({ ...prev, [postId]: wasLiked }));
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likeCount: post.likeCount + (wasLiked ? 1 : -1),
+                likeIds: wasLiked
+                  ? [...(post.likeIds || []), currentUserId]
+                  : (post.likeIds || []).filter((id) => id !== currentUserId),
+              }
+            : post
+        )
       );
-      if (await res.json()) {
-        setLiked((prev) => ({ ...prev, [postId]: false }));
-      }
     }
   };
 
@@ -371,7 +398,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
 
           {/* Like count */}
           <div style={{ fontWeight: 600, fontSize: "1.02rem", padding: "0.2rem 1.2rem" }}>
-            {post.likeCount + (liked[post.id] ? 1 : 0)} {post.likeCount + (liked[post.id] ? 1 : 0) === 1 ? "like" : "likes"}
+            {post.likeCount} {post.likeCount === 1 ? "like" : "likes"}
           </div>
 
           {/* Description */}
