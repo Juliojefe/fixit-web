@@ -394,10 +394,8 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
                 <FaRegBookmark color="#222" size={20} />
               )}
             </span>
-          </div>
-
-          {/* Like count */}
-          <div style={{ fontWeight: 600, fontSize: "1.02rem", padding: "0.2rem 1.2rem" }}>
+          </div>          {/* Like count */}
+          <div style={{ fontWeight: 600, fontSize: "1.02rem", padding: "0.2rem 1.2rem", color: "#333" }}>
             {post.likeCount} {post.likeCount === 1 ? "like" : "likes"}
           </div>
 
