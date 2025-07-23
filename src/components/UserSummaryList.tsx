@@ -117,6 +117,16 @@ export default function UserSummaryList({
     user: UserSummary,
     idx: number
   ) => {
+    const originalUsers = [...users];
+    const wasFollowing = user.follows;
+
+    // Optimistically update UI
+    setUsers((prev) =>
+      prev.map((u, i) =>
+        i === idx ? { ...u, follows: action === "follow" } : u
+      )
+    );
+
     let url = "";
     let method: "POST" | "DELETE" = "POST";
     if (action === "follow") {
@@ -126,19 +136,20 @@ export default function UserSummaryList({
       url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/unfollow/${user.id}`;
       method = "DELETE";
     }
+
     try {
       const res = await fetch(url, { method });
       const success = await res.json();
-      if (success) {
-        setUsers((prev) =>
-          prev.map((u, i) =>
-            i === idx ? { ...u, follows: action === "follow" } : u
-          )
-        );
+      if (!success) {
+        // Revert on failure
+        setUsers(originalUsers);
+      } else {
+        // Propagate successful action
         if (onAction) onAction(user.id, action);
       }
     } catch (e) {
-      // Optionally show error
+      // Revert on error
+      setUsers(originalUsers);
     }
   };
 
