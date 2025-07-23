@@ -345,7 +345,7 @@ export default function ProfilePage() {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => setShowPopup(null)}
+          onClick={handleClosePopup}
         >
           <div
             style={{
