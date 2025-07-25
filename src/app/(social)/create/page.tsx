@@ -4,11 +4,11 @@ import { useUser } from "../../../context/UserContext";
 import React, { useState, useEffect } from "react";
 
 type PostSummary = {
-  postId: number; // Assuming the post ID is returned
+  postId: number;
   description: string;
   createdBy: string;
   createdByProfilePicUrl: string;
-  createdAt: string; // ISO date string
+  createdAt: string;
   likeIds: number[];
   likeCount: number;
   commentIds: number[];
@@ -56,30 +56,78 @@ export default function CreatePage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f5f6fa",
+        background: "#f0f2f5",
+        padding: "2rem 0",
       }}
     >
       <div
         style={{
           background: "#fff",
-          padding: "2rem",
+          padding: "2rem 2.5rem",
           borderRadius: "12px",
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           width: "100%",
-          maxWidth: "500px",
+          maxWidth: "550px",
+          border: "1px solid #ddd",
         }}
       >
-        <h1 style={{ textAlign: "center", marginBottom: "2rem", color: "#222" }}>
+        <h1 style={{ textAlign: "center", marginBottom: "2rem", color: "#222", fontWeight: 600 }}>
           Create New Post
         </h1>
-        <form 
-          action={`${process.env.NEXT_PUBLIC_API_URL}/api/post/create-post-images`} 
-          method="POST" 
-          encType="multipart/form-data"
-        >
+        
+        <form action={`${process.env.NEXT_PUBLIC_API_URL}/api/post/create-post-images`} method="POST" encType="multipart/form-data">
           <input type="hidden" name="user_id" value={user?.userId || ''} />
           <input type="hidden" name="createdAt" value={new Date().toISOString()} />
 
+          {/* Image Upload Section */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label 
+              htmlFor="file-upload" 
+              style={{
+                display: "block",
+                padding: "2rem",
+                border: "2px dashed #ddd",
+                borderRadius: "8px",
+                textAlign: "center",
+                cursor: "pointer",
+                background: imagePreviews.length > 0 ? "#f9f9f9" : "#fff",
+                transition: "background-color 0.2s",
+              }}
+            >
+              {imagePreviews.length > 0 ? (
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+                  {imagePreviews.map((preview, index) => (
+                    <img
+                      key={index}
+                      src={preview}
+                      alt="Image preview"
+                      style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <p style={{ margin: 0, color: "#555", fontWeight: 500 }}>
+                    Click to upload images
+                  </p>
+                  <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.9rem", color: "#888" }}>
+                    PNG, JPG, GIF
+                  </p>
+                </div>
+              )}
+            </label>
+            <input
+              id="file-upload"
+              name="requestImages"
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
+          </div>
+
+          {/* Description Section */}
           <textarea
             name="description"
             value={description}
@@ -87,47 +135,25 @@ export default function CreatePage() {
             placeholder="Write a caption..."
             style={{
               width: "100%",
-              minHeight: "100px",
-              padding: "0.8rem",
+              minHeight: "120px",
+              padding: "1rem",
               border: "1px solid #ddd",
               borderRadius: "8px",
               fontSize: "1rem",
-              marginBottom: "1rem",
+              marginBottom: "1.5rem",
               resize: "vertical",
+              fontFamily: "inherit",
             }}
           />
-          <input
-            name="requestImages"
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            style={{
-              width: "100%",
-              padding: "0.8rem",
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-            }}
-          />
-          {imagePreviews.length > 0 && (
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-              {imagePreviews.map((preview, index) => (
-                <img
-                  key={index}
-                  src={preview}
-                  alt="Image preview"
-                  style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px" }}
-                />
-              ))}
-            </div>
-          )}
-          {error && <p style={{ color: "#e74c3c", marginBottom: "1rem" }}>{error}</p>}
+
+          {error && <p style={{ color: "#d93025", marginBottom: "1.5rem", textAlign: "center" }}>{error}</p>}
+
+          {/* Submit Button */}
           <button
             type="submit"
             style={{
               width: "100%",
-              padding: "0.8rem",
+              padding: "0.9rem",
               background: "#0070f3",
               color: "#fff",
               border: "none",
@@ -135,6 +161,7 @@ export default function CreatePage() {
               fontWeight: "bold",
               cursor: "pointer",
               fontSize: "1.1rem",
+              transition: "background-color 0.2s",
             }}
           >
             Create Post
@@ -143,20 +170,27 @@ export default function CreatePage() {
 
         {/* Show a preview of the post */}
         {newPost && (
-          <div style={{ marginTop: "2rem", borderTop: "1px solid #eee", paddingTop: "2rem" }}>
-            <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>Post Created!</h2>
-            <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "1rem" }}>
+          <div style={{ marginTop: "2.5rem", borderTop: "1px solid #eee", paddingTop: "2.5rem" }}>
+            <h2 style={{ textAlign: "center", marginBottom: "1.5rem", color: "#0070f3", fontWeight: 600 }}>
+              Post Created Successfully!
+            </h2>
+            <div style={{ border: "1px solid #e0e0e0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               {newPost.imageUrls && newPost.imageUrls[0] && (
                 <img 
                   src={newPost.imageUrls[0]} 
                   alt="Newly created post" 
-                  style={{ width: "100%", borderRadius: "8px", marginBottom: "1rem" }} 
+                  style={{ width: "100%", display: "block" }} 
                 />
               )}
-              <p><strong>{newPost.createdBy}:</strong> {newPost.description}</p>
-              <p style={{ color: "#777", fontSize: "0.9rem", marginTop: "0.5rem" }}>
-                {new Date(newPost.createdAt).toLocaleString()}
-              </p>
+              <div style={{ padding: "1rem 1.2rem" }}>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: "#222" }}>{newPost.createdBy}</strong>{" "}
+                  <span style={{ color: "#444" }}>{newPost.description}</span>
+                </p>
+                <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "0.75rem", marginBottom: 0 }}>
+                  {new Date(newPost.createdAt).toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
         )}
