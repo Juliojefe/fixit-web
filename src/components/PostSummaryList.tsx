@@ -124,7 +124,6 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     return () => ref.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Add these async handlers inside your component:
   const handleLike = async (postId: number) => {
     const wasLiked = liked[postId];
     // Optimistically update UI

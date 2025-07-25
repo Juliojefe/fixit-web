@@ -19,7 +19,7 @@ type PostSummary = {
 
 export default function CreatePage() {
   const router = useRouter();
-  const { user } = useUser(); // No token needed for this approach
+  const { user } = useUser();
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -44,7 +44,7 @@ export default function CreatePage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Stop the page from reloading
+    e.preventDefault();
     if (!user || images.length === 0) {
       setError("Please add images and ensure you are logged in.");
       return;
@@ -66,7 +66,6 @@ export default function CreatePage() {
         {
           method: "POST",
           body: formData,
-          // This is the key. It tells the browser to send your login cookie.
           credentials: 'include',
         }
       );
@@ -77,13 +76,10 @@ export default function CreatePage() {
       }
 
       const createdPost: PostSummary = await res.json();
-      setNewPost(createdPost); // This will now work and show the preview
-
-      // Clear the form
+      setNewPost(createdPost);
       setDescription("");
       setImages([]);
       setImagePreviews([]);
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -99,15 +95,12 @@ export default function CreatePage() {
     <div
       style={{
         minHeight: "100vh",
-        display: "flex",
-        // When a post is created, align to top to allow scrolling
-        alignItems: newPost ? "flex-start" : "center",
-        justifyContent: "center",
         background: "#f0f2f5",
         padding: "2rem 0",
       }}
     >
       <div
+        className="hide-scrollbar"
         style={{
           background: "#fff",
           padding: "2rem 2.5rem",
@@ -116,6 +109,9 @@ export default function CreatePage() {
           width: "100%",
           maxWidth: "550px",
           border: "1px solid #ddd",
+          margin: "0 auto",
+          maxHeight: "90vh",
+          overflowY: "auto",
         }}
       >
         <h1 style={{ textAlign: "center", marginBottom: "2rem", color: "#222", fontWeight: 600 }}>

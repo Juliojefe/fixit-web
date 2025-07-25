@@ -66,13 +66,11 @@ export default function ProfilePage() {
     setShowPopup("following");
   }
 
-  // When popup closes, update followingIds/count based on actions taken in popup
   const handleClosePopup = () => {
     if (pendingActions.length > 0) {
       setProfileData((prev: any) => {
         let newData = { ...prev };
         pendingActions.forEach(({ id, action }) => {
-          // Update followingIds and followingCount for both popups
           if (action === "follow" && !newData.followingIds.includes(id)) {
             newData.followingIds = [...newData.followingIds, id];
             newData.followingCount = (newData.followingCount || 0) + 1;
