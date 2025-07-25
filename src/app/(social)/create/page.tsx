@@ -19,7 +19,7 @@ type PostSummary = {
 
 export default function CreatePage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useUser(); // No token needed for this approach
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -37,11 +37,57 @@ export default function CreatePage() {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       setImages(filesArray);
-
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-
       const previews = filesArray.map((file) => URL.createObjectURL(file));
       setImagePreviews(previews);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Stop the page from reloading
+    if (!user || images.length === 0) {
+      setError("Please add images and ensure you are logged in.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("description", description);
+    formData.append("user_id", String(user.userId));
+    formData.append("createdAt", new Date().toISOString());
+    images.forEach((image) => {
+      formData.append("requestImages", image);
+    });
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/create-post-images`,
+        {
+          method: "POST",
+          body: formData,
+          // This is the key. It tells the browser to send your login cookie.
+          credentials: 'include',
+        }
+      );
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to create post.");
+      }
+
+      const createdPost: PostSummary = await res.json();
+      setNewPost(createdPost); // This will now work and show the preview
+
+      // Clear the form
+      setDescription("");
+      setImages([]);
+      setImagePreviews([]);
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,7 +100,8 @@ export default function CreatePage() {
       style={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
+        // When a post is created, align to top to allow scrolling
+        alignItems: newPost ? "flex-start" : "center",
         justifyContent: "center",
         background: "#f0f2f5",
         padding: "2rem 0",
@@ -75,10 +122,7 @@ export default function CreatePage() {
           Create New Post
         </h1>
         
-        <form action={`${process.env.NEXT_PUBLIC_API_URL}/api/post/create-post-images`} method="POST" encType="multipart/form-data">
-          <input type="hidden" name="user_id" value={user?.userId || ''} />
-          <input type="hidden" name="createdAt" value={new Date().toISOString()} />
-
+        <form onSubmit={handleSubmit}>
           {/* Image Upload Section */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label 
@@ -151,20 +195,21 @@ export default function CreatePage() {
           {/* Submit Button */}
           <button
             type="submit"
+            disabled={loading}
             style={{
               width: "100%",
               padding: "0.9rem",
-              background: "#0070f3",
+              background: loading ? "#ccc" : "#0070f3",
               color: "#fff",
               border: "none",
               borderRadius: "8px",
               fontWeight: "bold",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontSize: "1.1rem",
               transition: "background-color 0.2s",
             }}
           >
-            Create Post
+            {loading ? "Creating..." : "Create Post"}
           </button>
         </form>
 
