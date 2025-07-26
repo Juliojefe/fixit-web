@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
 import React, { useState, useEffect } from "react";
+import PostSummaryList from "../../../components/PostSummaryList";
 
 type PostSummary = {
   postId: number;
@@ -25,7 +26,7 @@ export default function CreatePage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newPost, setNewPost] = useState<PostSummary | null>(null);
+  const [newPostId, setNewPostId] = useState<number | null>(null); // State to hold the new post ID
 
   useEffect(() => {
     if (!user) {
@@ -76,7 +77,7 @@ export default function CreatePage() {
       }
 
       const createdPost: PostSummary = await res.json();
-      setNewPost(createdPost);
+      setNewPostId(createdPost.postId);
       setDescription("");
       setImages([]);
       setImagePreviews([]);
@@ -209,30 +210,13 @@ export default function CreatePage() {
           </button>
         </form>
 
-        {/* Show a preview of the post */}
-        {newPost && (
+        {/* Use PostSummaryList to render the preview */}
+        {newPostId && user && (
           <div style={{ marginTop: "2.5rem", borderTop: "1px solid #eee", paddingTop: "2.5rem" }}>
             <h2 style={{ textAlign: "center", marginBottom: "1.5rem", color: "#0070f3", fontWeight: 600 }}>
               Post Created Successfully!
             </h2>
-            <div style={{ border: "1px solid #e0e0e0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-              {newPost.imageUrls && newPost.imageUrls[0] && (
-                <img 
-                  src={newPost.imageUrls[0]} 
-                  alt="Newly created post" 
-                  style={{ width: "100%", display: "block" }} 
-                />
-              )}
-              <div style={{ padding: "1rem 1.2rem" }}>
-                <p style={{ margin: 0 }}>
-                  <strong style={{ color: "#222" }}>{newPost.createdBy}</strong>{" "}
-                  <span style={{ color: "#444" }}>{newPost.description}</span>
-                </p>
-                <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "0.75rem", marginBottom: 0 }}>
-                  {new Date(newPost.createdAt).toLocaleString()}
-                </p>
-              </div>
-            </div>
+            <PostSummaryList postIds={[newPostId]} currentUserId={user.userId} />
           </div>
         )}
       </div>
