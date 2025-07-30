@@ -9,39 +9,52 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const { setUser } = useUser();
-  const [errorMessage, setErrorMessage] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { login } = useUser();
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return;
     }
+    
     try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/login`, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         email: email,
         password: password,
       });
+
       const data = response.data;
+
       if (data.success) {
-        setUser({
+        const userData = {
           name: data.name,
           email: data.email,
           profilePic: data.profilePic || "",
           userId: data.userId,
           isGoogle: data.isGoogle || false,
-        })
+        };
+        const tokens = {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        };
+
+        login(userData, tokens);
         router.push("/home");
-        setErrorMessage("");
       } else {
-        setErrorMessage("Login failed. Please check your credentials.");
+        setErrorMessage(data.message || "Login failed. Please check your credentials.");
       }
-    } catch (error) {
-      alert("An error occurred during login. Please try again later.");
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response) {
+        setErrorMessage(error.response.data.message || "An error occurred during login.");
+      } else {
+        setErrorMessage("An error occurred. Please try again later.");
+      }
+      console.error("Login error:", error);
     }
-    return;
   }
 
   function handleSignUp() {
