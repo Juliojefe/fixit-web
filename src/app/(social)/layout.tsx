@@ -9,7 +9,7 @@ const sidebarItems = [
   { label: "Profile", icon: <FaUser />, route: "/profile" },
   { label: "Messages", icon: <FaEnvelope />, route: "/chats" },
   { label: "Notifications", icon: <FaBell />, route: "/notifications" },
-  { label: "Explore", icon: <FaCompass />, route: "/explore" }, // <-- Added Explore
+  { label: "Explore", icon: <FaCompass />, route: "/explore" },
   { label: "Search", icon: <FaSearch />, route: "/search" },
   { label: "Create", icon: <FaPlusCircle />, route: "/create" },
 ];
@@ -20,18 +20,34 @@ const DEFAULT_PROFILE =
 export default function SocialLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, setUser } = useUser();
+  const { user, logout, isLoading } = useUser();
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login");
+    // Wait until the initial loading is complete
+    if (!isLoading) {
+      // If there's no user after checking, then redirect to login
+      if (!user) {
+        router.push("/login");
+      }
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
+  // While the context is checking for a session, show a loading screen.
+  // This prevents the layout from flashing before the user is redirected.
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f5f6fa' }}>
+        <p>Loading session...</p>
+      </div>
+    );
+  }
+
+  // If loading is done and there's still no user, return null to prevent rendering the layout
+  // just before the redirect happens.
   if (!user) return null;
 
   function handleLogout() {
-    setUser(null);
+    logout();
     router.push("/login");
   }
 
@@ -44,9 +60,7 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
       style={{
         display: "flex",
         minHeight: "100vh",
-        // height: "100vh", // Ensure full viewport height
         background: "#f5f6fa",
-        // overflow: "hidden", // Prevent unwanted scroll
       }}
     >
       {/* Sidebar */}
