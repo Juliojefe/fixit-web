@@ -31,7 +31,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // This function stops the timer. Memoize it so it's stable.
   const stopTokenRefreshInterval = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -39,7 +38,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Memoize logout.
   const logout = useCallback(() => {
     setUser(null);
     setAccessToken(null);
@@ -49,14 +47,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     stopTokenRefreshInterval();
   }, [stopTokenRefreshInterval]);
 
-  // This function performs the token refresh API call.
-  const refreshToken = useCallback(async () => {
+  // This function's ONLY job is to get a new token. It does not set state.
+  const getNewToken = useCallback(async () => {
     const storedRefreshToken = localStorage.getItem("refreshToken");
     if (!storedRefreshToken) {
-      logout();
-      return;
+      return null;
     }
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -65,55 +61,64 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to refresh token");
+        // If refresh fails, log the user out as the session is invalid.
+        logout();
+        return null;
       }
 
+      // The response is {"accessToken": "..."}. We parse it and return the token string.
       const data = await res.json();
-      const newAccessToken = data.accessToken;
-
-      setAccessToken(newAccessToken);
-      localStorage.setItem("accessToken", newAccessToken);
-      console.log("Access token refreshed successfully.");
+      if (typeof data.accessToken !== 'string') {
+        throw new Error("Invalid token format received from server.");
+      }
+      return data.accessToken;
 
     } catch (error) {
       console.error("Could not refresh token:", error);
       logout();
+      return null;
     }
   }, [logout]);
 
-  // This function clears any existing timer and starts a new one.
   const startTokenRefreshInterval = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    stopTokenRefreshInterval(); // Clear any existing interval first
 
-    const id = setInterval(() => {
+    const id = setInterval(async () => {
       console.log("Scheduled token refresh initiated.");
-      refreshToken();
-    }, 55 * 60 * 1000);
+      const newAccessToken = await getNewToken();
+      if (newAccessToken) {
+        // Update the state with the newly fetched token.
+        setAccessToken(newAccessToken);
+        localStorage.setItem("accessToken", newAccessToken);
+      }
+    }, 55 * 60 * 1000); // 55 minutes
     intervalRef.current = id;
-  }, [refreshToken]);
+  }, [getNewToken, stopTokenRefreshInterval]);
 
-  // On initial load, try to restore the session using the refresh token.
+  // On initial load, restore the session.
   useEffect(() => {
     const init = async () => {
-      const storedRefreshToken = localStorage.getItem("refreshToken");
       const storedUser = localStorage.getItem("user");
-
-      if (storedRefreshToken && storedUser) {
-        setUser(JSON.parse(storedUser));
-        await refreshToken();
-        startTokenRefreshInterval();
+      if (storedUser) {
+        const newAccessToken = await getNewToken();
+        if (newAccessToken) {
+          // Set both pieces of state together to prevent race conditions.
+          setAccessToken(newAccessToken);
+          setUser(JSON.parse(storedUser));
+          localStorage.setItem("accessToken", newAccessToken);
+          startTokenRefreshInterval();
+        }
       }
       setIsLoading(false);
     };
     init();
+    return stopTokenRefreshInterval;
+  }, [getNewToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
 
-    return () => stopTokenRefreshInterval();
-  }, [refreshToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
-
-  // Memoize login.
   const login = useCallback((userData: User, tokens: { accessToken: string; refreshToken: string }) => {
-    setUser(userData);
+    // On login, set everything fresh.
     setAccessToken(tokens.accessToken);
+    setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("accessToken", tokens.accessToken);
     localStorage.setItem("refreshToken", tokens.refreshToken);

@@ -26,6 +26,7 @@ export default function AuthCallback() {
       const tokens = { accessToken, refreshToken };
 
       login(userData, tokens);  // Call the login function to establish the session
+      console.log("Login called with:", userData, tokens);
       router.push("/home");
     } else {
       router.push("/login?error=Authentication failed. Please try again.");
