@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react"; // Import useCallback
 import { useUser } from "../../../context/UserContext";
 import PostSummaryList from "@/components/PostSummaryList";
 
