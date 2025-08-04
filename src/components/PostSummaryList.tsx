@@ -60,12 +60,12 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   // Fetch a batch of posts
   const fetchPostBatch = useCallback(
     async (ids: number[]) => {
-      if (!accessToken) return; // Don't fetch if there's no token
+      if (!accessToken) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`, {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
               },
@@ -150,7 +150,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     );
 
     try {
-      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/like`;
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/post/${postId}/like`;
       const method = wasLiked ? "DELETE" : "POST";
 
       await fetch(endpoint, {
@@ -198,7 +198,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     );
 
     try {
-      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/save`;
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/post/${postId}/save`;
       const method = wasSaved ? "DELETE" : "POST";
 
       await fetch(endpoint, {

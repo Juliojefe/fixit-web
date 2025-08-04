@@ -87,7 +87,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.log("Scheduled token refresh initiated.");
       const newAccessToken = await getNewToken();
       if (newAccessToken) {
-        // Update the state with the newly fetched token.
         setAccessToken(newAccessToken);
         localStorage.setItem("accessToken", newAccessToken);
       }

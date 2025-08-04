@@ -9,7 +9,6 @@ export default function HomePage() {
   const [postIds, setPostIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Define the data fetching logic with useCallback.
   // It depends on accessToken, so it will be re-created if the token changes.
   const fetchPostIds = useCallback(async () => {
     // Add this console log to see the exact token being used.
@@ -27,8 +26,7 @@ export default function HomePage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/post/all-ids`,
         {
           headers: {
-            // Remove the "Bearer " prefix to match the successful curl command
-            Authorization: `${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
