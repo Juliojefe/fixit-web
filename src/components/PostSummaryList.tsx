@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaHeart, FaRegHeart, FaRegComment, FaRegBookmark, FaBookmark } from "react-icons/fa";
+import { useUser } from "../context/UserContext";
 
 type PostSummary = {
   id: number;
@@ -54,15 +55,21 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   const [imageIndex, setImageIndex] = useState<{ [postId: number]: number }>({});
 
   const contentRef = useRef<HTMLDivElement>(null);
+  const { accessToken } = useUser();
 
   // Fetch a batch of posts
   const fetchPostBatch = useCallback(
     async (ids: number[]) => {
+      if (!accessToken) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
             const data = await res.json();
             return { ...data, id };
           })
@@ -85,15 +92,13 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
           ),
         }));
       } catch (e) {
-        // handle error
       } finally {
         setLoading(false);
       }
     },
-    [currentUserId]
+    [currentUserId, accessToken]
   );
 
-  // Load first batch on mount or when postIds change
   useEffect(() => {
     setPosts([]);
     setLoadedCount(0);
@@ -125,7 +130,9 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   }, [handleScroll]);
 
   const handleLike = async (postId: number) => {
+    if (!accessToken) return; // Protect against actions without a token
     const wasLiked = liked[postId];
+    
     // Optimistically update UI
     setLiked((prev) => ({ ...prev, [postId]: !wasLiked }));
     setPosts((prev) =>
@@ -143,17 +150,15 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     );
 
     try {
-      if (!wasLiked) {
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/post/like-post/${postId}/${currentUserId}`,
-          { method: "POST" }
-        );
-      } else {
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/post/unlike-post/${postId}/${currentUserId}`,
-          { method: "DELETE" }
-        );
-      }
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/post/${postId}/like`;
+      const method = wasLiked ? "DELETE" : "POST";
+
+      await fetch(endpoint, {
+        method: method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
     } catch (e) {
       // Revert if API fails
       setLiked((prev) => ({ ...prev, [postId]: wasLiked }));
@@ -174,44 +179,49 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   };
 
   const handleSave = async (postId: number) => {
-    if (!saved[postId]) {
-      // Save post
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/save-post/${postId}/${currentUserId}`,
-        { method: "POST" }
+    if (!accessToken) return; // Protect against actions without a token
+    const wasSaved = saved[postId];
+
+    // Optimistically update UI
+    setSaved((prev) => ({ ...prev, [postId]: !wasSaved }));
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              savedIds: !wasSaved
+                ? [...(post.savedIds || []), currentUserId]
+                : (post.savedIds || []).filter((id) => id !== currentUserId),
+            }
+          : post
+      )
+    );
+
+    try {
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/post/${postId}/save`;
+      const method = wasSaved ? "DELETE" : "POST";
+
+      await fetch(endpoint, {
+        method: method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (e) {
+      // Revert if API fails
+      setSaved((prev) => ({ ...prev, [postId]: wasSaved }));
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                savedIds: wasSaved
+                  ? [...(post.savedIds || []), currentUserId]
+                  : (post.savedIds || []).filter((id) => id !== currentUserId),
+              }
+            : post
+        )
       );
-      if (await res.json()) {
-        setSaved((prev) => ({ ...prev, [postId]: true }));
-        setPosts((prev) =>
-          prev.map((post) =>
-            post.id === postId
-              ? {
-                  ...post,
-                  savedIds: [...(post.savedIds || []), currentUserId],
-                }
-              : post
-          )
-        );
-      }
-    } else {
-      // Unsave post
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/unSave-post/${postId}/${currentUserId}`,
-        { method: "DELETE" }
-      );
-      if (await res.json()) {
-        setSaved((prev) => ({ ...prev, [postId]: false }));
-        setPosts((prev) =>
-          prev.map((post) =>
-            post.id === postId
-              ? {
-                  ...post,
-                  savedIds: (post.savedIds || []).filter((id) => id !== currentUserId),
-                }
-              : post
-          )
-        );
-      }
     }
   };
 
