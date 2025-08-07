@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { setUser } = useUser();
+  const { login } = useUser();
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -21,33 +21,29 @@ export default function SignUpPage() {
       setErrorMessage("Passwords do not match.");
       return;
     }
+    setErrorMessage("");
 
     try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/register`, {
-        name: firstName + " " + lastName,
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/register`, {
+        name: `${firstName} ${lastName}`,
         email: email,
         password: password,
-        profilePic: "", 
+        profilePic: "",
       });
-      const data = response.data;
-      if (data.success) {
-        setUser({
-          name: data.name,
-          email: data.email,
-          profilePic: data.profilePic || "",
-          userId: data.userId,
-          isGoogle: data.isGoogle || false,
-        })
-        router.push("/home")
-        setErrorMessage("");
-      } else {
-        setErrorMessage(data.name || "Sign up failed.");
-      }
+
+      const authData = response.data;
+
+      login(authData);
+      
+      router.push("/home");
 
     } catch (error) {
-      alert("An error occurred during sign up. Please try again later.");
+      if (axios.isAxiosError(error) && error.response) {
+        setErrorMessage(error.response.data.message || "Sign up failed. An error occurred.");
+      } else {
+        setErrorMessage("An unexpected error occurred. Please try again later.");
+      }
     }
-    return;
   }
 
   function hangleSignIn() {

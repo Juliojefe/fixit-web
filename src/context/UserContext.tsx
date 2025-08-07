@@ -5,15 +5,19 @@ export type User = {
   name: string;
   email: string;
   profilePic: string;
-  userId: number;
   isGoogle: boolean;
+};
+
+type AuthResponse = User & {
+  accessToken: string;
+  refreshToken: string;
 };
 
 type UserContextType = {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  login: (userData: User, tokens: { accessToken: string; refreshToken: string }) => void;
+  login: (authData: AuthResponse) => void;
   logout: () => void;
 };
 
@@ -114,13 +118,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return stopTokenRefreshInterval;
   }, [getNewToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
 
-  const login = useCallback((userData: User, tokens: { accessToken: string; refreshToken: string }) => {
-    // On login, set everything fresh.
-    setAccessToken(tokens.accessToken);
+  // The login function takes one object and splits it
+  // into the user data and the tokens for state and storage.
+  const login = useCallback((authData: AuthResponse) => {
+    const { accessToken, refreshToken, ...userData } = authData;
+    
     setUser(userData);
+    setAccessToken(accessToken);
+    
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("accessToken", tokens.accessToken);
-    localStorage.setItem("refreshToken", tokens.refreshToken);
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+    
     startTokenRefreshInterval();
   }, [startTokenRefreshInterval]);
 
