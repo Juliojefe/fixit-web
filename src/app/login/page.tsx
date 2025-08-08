@@ -45,7 +45,7 @@ export default function LoginPage() {
         login(userData, tokens);
         router.push("/home");
       } else {
-        setErrorMessage(data.message || "Login failed. Please check your credentials.");
+        setErrorMessage(data.name || "Login failed. Please check your credentials.");
       }
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
