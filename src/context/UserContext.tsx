@@ -1,19 +1,33 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { jwtDecode } from "jwt-decode";
 
 export type User = {
+  userId: number;
   name: string;
   email: string;
   profilePic: string;
-  userId: number;
   isGoogle: boolean;
+};
+
+type DecodedToken = {
+  sub: string; // Subject (in this case email)
+  userId: number; // The user ID
+  iat: number; // Issued at
+  exp: number; // Expiration time
+};
+
+type AuthResponse = Omit<User, 'userId'> & {
+  accessToken: string;
+  refreshToken: string;
 };
 
 type UserContextType = {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  login: (userData: User, tokens: { accessToken: string; refreshToken: string }) => void;
+  // Update the login function signature to accept an optional callback
+  login: (authData: AuthResponse, callback?: () => void) => void;
   logout: () => void;
 };
 
@@ -114,29 +128,52 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return stopTokenRefreshInterval;
   }, [getNewToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
 
-  const login = useCallback((userData: User, tokens: { accessToken: string; refreshToken: string }) => {
-    // On login, set everything fresh.
-    setAccessToken(tokens.accessToken);
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("accessToken", tokens.accessToken);
-    localStorage.setItem("refreshToken", tokens.refreshToken);
+  // The login function takes one object and splits it
+  // into the user data and the tokens for state and storage.
+  const login = useCallback((authData: AuthResponse, callback?: () => void) => {
+    const { accessToken, refreshToken, ...userDataFromApi } = authData;
+
+    // Decode the token to get the real userId
+    const decodedToken: DecodedToken = jwtDecode(accessToken);
+    const completeUser: User = { ...userDataFromApi, userId: decodedToken.userId };
+
+    setUser(completeUser);
+    setAccessToken(accessToken);
+
+    // Store the complete user object and tokens
+    localStorage.setItem("user", JSON.stringify(completeUser));
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
     startTokenRefreshInterval();
+
+    // If a callback function was provided, call it.
+    if (callback) {
+      callback();
+    }
   }, [startTokenRefreshInterval]);
+
+  // This function runs on page load to restore the session
+  const init = useCallback(async () => {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("accessToken");
+
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser));
+      setAccessToken(storedToken);
+      startTokenRefreshInterval();
+    }
+    setIsLoading(false);
+  }, [startTokenRefreshInterval]);
+
+  useEffect(() => {
+    init();
+    return stopTokenRefreshInterval;
+  }, [init, stopTokenRefreshInterval]);
 
   const value = { user, accessToken, isLoading, login, logout };
 
-  return (
-    <UserContext.Provider value={value}>
-      {!isLoading && children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
-export function useUser() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
-}
+export const useUser = () => useContext(UserContext);

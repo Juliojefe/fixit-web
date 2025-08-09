@@ -14,7 +14,6 @@ export default function HomePage() {
     // Add this console log to see the exact token being used.
     // console.log("Attempting to fetch post IDs with token:", accessToken);
 
-    // Guard clause: ensure we have a token before fetching.
     if (!accessToken) {
       console.error("Fetch aborted: No access token available.");
       return;
@@ -52,11 +51,10 @@ export default function HomePage() {
   }, [accessToken]);
 
   useEffect(() => {
-    // We only proceed if we have a user. The fetch function itself handles the token check.
-    if (user) {
+    if (accessToken) {
       fetchPostIds();
     }
-  }, [user, fetchPostIds]); // Depend on user and the memoized function.
+  }, [accessToken, fetchPostIds]);
 
   if (!user) return null;
 
@@ -83,7 +81,7 @@ export default function HomePage() {
             Loading posts...
           </div>
         ) : (
-          <PostSummaryList postIds={postIds} currentUserId={user.userId} />
+          <PostSummaryList postIds={postIds} />
         )}
       </div>
     </div>
