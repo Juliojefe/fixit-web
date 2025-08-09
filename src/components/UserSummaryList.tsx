@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useUser } from "../context/UserContext";
 
 const DEFAULT_PROFILE = "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
 
@@ -23,7 +24,6 @@ export type UserSummary = {
 
 type UserSummaryListProps = {
   userIds: number[];
-  currentUserId: number;
   renderUser: (
     user: UserSummary,
     idx: number,
@@ -36,7 +36,6 @@ type UserSummaryListProps = {
 
 export default function UserSummaryList({
   userIds,
-  currentUserId,
   renderUser,
   onAction,
   style,
@@ -45,18 +44,24 @@ export default function UserSummaryList({
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
-
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const { accessToken } = useUser();
 
   const fetchUserBatch = useCallback(
     async (ids: number[]) => {
-      if (!currentUserId || ids.length === 0) return;
+      if (!accessToken || ids.length === 0) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${currentUserId}/${id}`
+              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${id}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`
+                }
+              }
             );
             const data = await res.json();
             return { ...data, id };
@@ -67,15 +72,13 @@ export default function UserSummaryList({
           ...batch.filter((newUser) => !prev.some((u) => u.id === newUser.id)),
         ]);
       } catch (e) {
-        // handle error
       } finally {
         setLoading(false);
       }
     },
-    [currentUserId]
+    [accessToken]
   );
 
-  // Load first batch on mount or when userIds change
   useEffect(() => {
     setUsers([]);
     setLoadedCount(0);
@@ -85,7 +88,6 @@ export default function UserSummaryList({
     }
   }, [userIds, fetchUserBatch]);
 
-  // Debounced scroll handler
   const handleScroll = useCallback(
     debounce(() => {
       if (!contentRef.current || loading) return;
@@ -117,6 +119,8 @@ export default function UserSummaryList({
     user: UserSummary,
     idx: number
   ) => {
+    if (!accessToken) return;
+
     const originalUsers = [...users];
     const wasFollowing = user.follows;
 
@@ -129,16 +133,22 @@ export default function UserSummaryList({
 
     let url = "";
     let method: "POST" | "DELETE" = "POST";
+
     if (action === "follow") {
-      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/follow/${user.id}`;
+      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}`;
       method = "POST";
     } else {
-      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUserId}/unfollow/${user.id}`;
+      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}`;
       method = "DELETE";
     }
 
     try {
-      const res = await fetch(url, { method });
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
       const success = await res.json();
       if (!success) {
         // Revert on failure
@@ -148,7 +158,6 @@ export default function UserSummaryList({
         if (onAction) onAction(user.id, action);
       }
     } catch (e) {
-      // Revert on error
       setUsers(originalUsers);
     }
   };
