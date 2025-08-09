@@ -9,26 +9,41 @@ const DEFAULT_PROFILE =
 export default function ExplorePage() {
   const [userIds, setUserIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const { user } = useUser();
+  const { user, accessToken } = useUser();
   const currentUserId = user?.userId;
 
   useEffect(() => {
     async function fetchUserIds() {
+      if (!accessToken) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/all-ids`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/all-ids`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch user IDs');
+        }
+
         const data = await res.json();
         setUserIds(Array.isArray(data) && currentUserId
           ? data.filter(id => id !== currentUserId)
           : []);
       } catch (e) {
+        console.error("Error fetching user IDs:", e);
         setUserIds([]);
       }
       setLoading(false);
     }
-    if (currentUserId) fetchUserIds();
-  }, [currentUserId]);
+    if (currentUserId && accessToken) {
+      fetchUserIds();
+    }
+  }, [currentUserId, accessToken]);
 
   // HEIGHTS
   const CARD_HEIGHT = 600; // px, adjust as needed
@@ -94,7 +109,6 @@ export default function ExplorePage() {
           ) : (
             <UserSummaryList
               userIds={userIds}
-              currentUserId={currentUserId ?? 0}
               renderUser={(user, idx, handleAction) => (
                 <div
                   key={user.id}
