@@ -1,59 +1,42 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import axios from 'axios';
 import { useUser } from "../../context/UserContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const { login } = useUser();
-  const [errorMessage, setErrorMessage] = useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
-    
+    setErrorMessage("");
+
     try {
+      // 1. Call the login endpoint
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         email: email,
         password: password,
       });
 
-      const data = response.data;
+      // 2. The entire response.data is the AuthResponse object
+      const authData = response.data;
 
-      if (data.success) {
-        const userData = {
-          name: data.name,
-          email: data.email,
-          profilePic: data.profilePic || "",
-          userId: data.userId,
-          isGoogle: data.isGoogle || false,
-        };
-        const tokens = {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        };
+      // 3. Pass the complete object to the context's login function
+      login(authData);
+      
+      router.push("/home");
 
-        login(userData, tokens);
-        router.push("/home");
-      } else {
-        setErrorMessage(data.name || "Login failed. Please check your credentials.");
-      }
-    } catch (error: any) {
+    } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setErrorMessage(error.response.data.message || "An error occurred during login.");
+        setErrorMessage(error.response.data.message || "Login failed. Please check your credentials.");
       } else {
-        setErrorMessage("An error occurred. Please try again later.");
+        setErrorMessage("An unexpected error occurred. Please try again later.");
       }
-      console.error("Login error:", error);
     }
   }
 
@@ -61,7 +44,7 @@ export default function LoginPage() {
     router.push("/signUp");
   }
 
-  function handleSignInWithGoogle() {
+  function handleLoginWithGoogle() {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/google`;
   }
 
@@ -98,14 +81,14 @@ export default function LoginPage() {
             required
             onChange={e => setEmail(e.target.value)}
             style={{
+              background: "#fafbfc",
+              color: "#222",
+              fontSize: "1rem",
               width: "100%",
               padding: "0.6rem",
               marginTop: "0.25rem",
               border: "1px solid #ccc",
               borderRadius: "6px",
-              background: "#fafbfc",
-              color: "#222",
-              fontSize: "1rem",
             }}
           />
         </label>
@@ -117,33 +100,14 @@ export default function LoginPage() {
             required
             onChange={e => setPassword(e.target.value)}
             style={{
+              background: "#fafbfc",
+              color: "#222",
+              fontSize: "1rem",
               width: "100%",
               padding: "0.6rem",
               marginTop: "0.25rem",
               border: "1px solid #ccc",
               borderRadius: "6px",
-              background: "#fafbfc",
-              color: "#222",
-              fontSize: "1rem",
-            }}
-          />
-        </label>
-        <label style={{ color: "#555", fontWeight: 500 }}>
-          Confirm Password
-          <input
-            type="password"
-            value={confirmPassword}
-            required
-            onChange={e => setConfirmPassword(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              marginTop: "0.25rem",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              background: "#fafbfc",
-              color: "#222",
-              fontSize: "1rem",
             }}
           />
         </label>
@@ -154,7 +118,6 @@ export default function LoginPage() {
             fontWeight: "bold",
             background: "#0070f3",
             color: "#fff",
-            border: "none",
             borderRadius: "6px",
             fontSize: "1rem",
             cursor: "pointer",
@@ -180,11 +143,11 @@ export default function LoginPage() {
             transition: "background 0.2s",
           }}
         >
-          Sign up
+          Create Account
         </button>
         <button
           type="button"
-          onClick={handleSignInWithGoogle}
+          onClick={handleLoginWithGoogle}
           style={{
             padding: "0.7rem",
             fontWeight: "bold",
@@ -208,16 +171,16 @@ export default function LoginPage() {
           />
           Continue with Google
         </button>
-          {errorMessage && (
-            <div style={{
-              color: "#d32f2f",
-              fontSize: "0.85rem",
-              marginTop: "1.2rem",
-              textAlign: "center",
-              whiteSpace: "pre-line"
-            }}>
-              {errorMessage}
-            </div>
+        {errorMessage && (
+          <div style={{
+            color: "#d32f2f",
+            fontSize: "0.85rem",
+            marginTop: "1.2rem",
+            textAlign: "center",
+            whiteSpace: "pre-line"
+          }}>
+            {errorMessage}
+          </div>
         )}
       </form>
     </div>

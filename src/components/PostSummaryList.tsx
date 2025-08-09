@@ -19,7 +19,6 @@ type PostSummary = {
 
 type PostSummaryListProps = {
   postIds: number[];
-  currentUserId: number;
 };
 
 const BATCH_SIZE = 5;
@@ -45,22 +44,21 @@ function timeAgo(dateString: string) {
   return `${Math.floor(diff / 31536000)} years ago`;
 }
 
-export default function PostSummaryList({ postIds, currentUserId }: PostSummaryListProps) {
+export default function PostSummaryList({ postIds }: PostSummaryListProps) {
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
   const [liked, setLiked] = useState<{ [postId: number]: boolean }>({});
   const [saved, setSaved] = useState<{ [postId: number]: boolean }>({});
   const [expanded, setExpanded] = useState<{ [postId: number]: boolean }>({});
   const [imageIndex, setImageIndex] = useState<{ [postId: number]: number }>({});
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const { accessToken } = useUser();
+  const { user, accessToken } = useUser();
 
   // Fetch a batch of posts
   const fetchPostBatch = useCallback(
     async (ids: number[]) => {
-      if (!accessToken) return;
+      if (!accessToken || !user) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
@@ -82,13 +80,13 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
         setLiked((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            batch.map((post) => [post.id, Array.isArray(post.likeIds) && post.likeIds.includes(currentUserId)])
+            batch.map((post) => [post.id, Array.isArray(post.likeIds) && post.likeIds.includes(user.userId)])
           ),
         }));
         setSaved((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            batch.map((post) => [post.id, Array.isArray(post.savedIds) && post.savedIds.includes(currentUserId)])
+            batch.map((post) => [post.id, Array.isArray(post.savedIds) && post.savedIds.includes(user.userId)])
           ),
         }));
       } catch (e) {
@@ -96,15 +94,13 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
         setLoading(false);
       }
     },
-    [currentUserId, accessToken]
+    [user, accessToken]
   );
 
   useEffect(() => {
     setPosts([]);
-    setLoadedCount(0);
     if (postIds.length > 0) {
       fetchPostBatch(postIds.slice(0, BATCH_SIZE));
-      setLoadedCount(BATCH_SIZE);
     }
   }, [postIds, fetchPostBatch]);
 
@@ -113,13 +109,12 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
     debounce(() => {
       if (!contentRef.current || loading) return;
       const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-      if (scrollTop + clientHeight >= scrollHeight - 120 && loadedCount < postIds.length) {
-        const nextBatch = postIds.slice(loadedCount, loadedCount + BATCH_SIZE);
+      if (scrollTop + clientHeight >= scrollHeight - 120 && posts.length < postIds.length) {
+        const nextBatch = postIds.slice(posts.length, posts.length + BATCH_SIZE);
         fetchPostBatch(nextBatch);
-        setLoadedCount((prev) => prev + nextBatch.length);
       }
     }, DEBOUNCE_MS),
-    [loadedCount, postIds, loading, fetchPostBatch]
+    [posts, postIds, loading, fetchPostBatch]
   );
 
   useEffect(() => {
@@ -130,7 +125,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   }, [handleScroll]);
 
   const handleLike = async (postId: number) => {
-    if (!accessToken) return; // Protect against actions without a token
+    if (!accessToken || !user) return;
     const wasLiked = liked[postId];
     
     // Optimistically update UI
@@ -142,8 +137,8 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
               ...post,
               likeCount: post.likeCount + (!wasLiked ? 1 : -1),
               likeIds: !wasLiked
-                ? [...(post.likeIds || []), currentUserId]
-                : (post.likeIds || []).filter((id) => id !== currentUserId),
+                ? [...(post.likeIds || []), user.userId]
+                : (post.likeIds || []).filter((id) => id !== user.userId),
             }
           : post
       )
@@ -169,8 +164,8 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
                 ...post,
                 likeCount: post.likeCount + (wasLiked ? 1 : -1),
                 likeIds: wasLiked
-                  ? [...(post.likeIds || []), currentUserId]
-                  : (post.likeIds || []).filter((id) => id !== currentUserId),
+                  ? [...(post.likeIds || []), user.userId]
+                  : (post.likeIds || []).filter((id) => id !== user.userId),
               }
             : post
         )
@@ -179,7 +174,7 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
   };
 
   const handleSave = async (postId: number) => {
-    if (!accessToken) return; // Protect against actions without a token
+    if (!accessToken || !user) return;
     const wasSaved = saved[postId];
 
     // Optimistically update UI
@@ -190,8 +185,8 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
           ? {
               ...post,
               savedIds: !wasSaved
-                ? [...(post.savedIds || []), currentUserId]
-                : (post.savedIds || []).filter((id) => id !== currentUserId),
+                ? [...(post.savedIds || []), user.userId]
+                : (post.savedIds || []).filter((id) => id !== user.userId),
             }
           : post
       )
@@ -216,8 +211,8 @@ export default function PostSummaryList({ postIds, currentUserId }: PostSummaryL
             ? {
                 ...post,
                 savedIds: wasSaved
-                  ? [...(post.savedIds || []), currentUserId]
-                  : (post.savedIds || []).filter((id) => id !== currentUserId),
+                  ? [...(post.savedIds || []), user.userId]
+                  : (post.savedIds || []).filter((id) => id !== user.userId),
               }
             : post
         )
