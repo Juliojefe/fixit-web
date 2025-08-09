@@ -29,13 +29,16 @@ export default function AuthCallback() {
         refreshToken,
       };
 
-      login(authData);
-      console.log("Login called with:", authData);
-      router.push("/home");
+      // Pass the navigation as a callback to the login function.
+      // This ensures router.push only happens AFTER the user state is set.
+      login(authData, () => {
+        router.push("/home");
+      });
     } else {
       router.push("/login?error=Authentication failed. Please try again.");
     }
-  }, [searchParams, login, router]);
+    // We can remove `login` and `router` from dependencies as they are stable
+  }, [searchParams]);
 
   return <div>Processing authentication...</div>;
 }

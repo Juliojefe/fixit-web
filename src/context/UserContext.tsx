@@ -26,7 +26,8 @@ type UserContextType = {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  login: (authData: AuthResponse) => void;
+  // Update the login function signature to accept an optional callback
+  login: (authData: AuthResponse, callback?: () => void) => void;
   logout: () => void;
 };
 
@@ -129,17 +130,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // The login function takes one object and splits it
   // into the user data and the tokens for state and storage.
-  const login = useCallback((authData: AuthResponse) => {
+  const login = useCallback((authData: AuthResponse, callback?: () => void) => {
     const { accessToken, refreshToken, ...userDataFromApi } = authData;
 
     // Decode the token to get the real userId
     const decodedToken: DecodedToken = jwtDecode(accessToken);
-    
-    // Combine the user data from the API with the userId from the token
-    const completeUser: User = {
-      ...userDataFromApi,
-      userId: decodedToken.userId,
-    };
+    const completeUser: User = { ...userDataFromApi, userId: decodedToken.userId };
 
     setUser(completeUser);
     setAccessToken(accessToken);
@@ -150,6 +146,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("refreshToken", refreshToken);
 
     startTokenRefreshInterval();
+
+    // If a callback function was provided, call it.
+    if (callback) {
+      callback();
+    }
   }, [startTokenRefreshInterval]);
 
   // This function runs on page load to restore the session

@@ -33,9 +33,11 @@ export default function SignUpPage() {
 
       const authData = response.data;
 
-      login(authData);
-      
-      router.push("/home");
+      // Pass the navigation logic as a callback to the login function.
+      // This prevents a race condition and ensures a clean redirect.
+      login(authData, () => {
+        router.push("/home");
+      });
 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
