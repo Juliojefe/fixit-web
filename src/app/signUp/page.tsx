@@ -24,7 +24,7 @@ export default function SignUpPage() {
     setErrorMessage("");
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/register`, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         name: `${firstName} ${lastName}`,
         email: email,
         password: password,
@@ -33,8 +33,6 @@ export default function SignUpPage() {
 
       const authData = response.data;
 
-      // Pass the navigation logic as a callback to the login function.
-      // This prevents a race condition and ensures a clean redirect.
       login(authData, () => {
         router.push("/home");
       });
