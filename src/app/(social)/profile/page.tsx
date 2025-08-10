@@ -10,7 +10,7 @@ const DEFAULT_PROFILE =
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, accessToken } = useUser();
   const currentUserId = user?.userId;
   const [profileData, setProfileData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
@@ -22,16 +22,21 @@ export default function ProfilePage() {
   const [tabPostIds, setTabPostIds] = useState<number[]>([]);
   const [tabLoading, setTabLoading] = useState(false);
 
-  // Fetch the logged-in user's profile data
   useEffect(() => {
     if (!user) {
       router.push("/login");
       return;
     }
     async function fetchProfile() {
+      if (!accessToken) return;
       setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${currentUserId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${currentUserId}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
         setProfileData(data);
       } catch (e) {
@@ -40,23 +45,55 @@ export default function ProfilePage() {
       setLoading(false);
     }
     fetchProfile();
-  }, [user, router, currentUserId]);
+  }, [user, router, currentUserId, accessToken]);
 
+  // Fetch posts for the active tab
   useEffect(() => {
     if (!currentUserId) return;
+
     let endpoint = "";
-    if (activeTab === "posts") endpoint = `/api/post/owned-post-by-userId/${currentUserId}`;
-    if (activeTab === "liked") endpoint = `/api/post/liked-post-by-userId/${currentUserId}`;
-    if (activeTab === "saved") endpoint = `/api/post/saved-post-by-userId/${currentUserId}`;
+    const headers: HeadersInit = {};
+    let requiresAuth = false;
+
+    switch (activeTab) {
+      case "posts":
+        endpoint = `/api/post/owned/${currentUserId}`;
+        break;
+      case "liked":
+        endpoint = `/api/post/liked/${currentUserId}`;
+        break;
+      case "saved":
+        // The "saved" endpoint is private and requires a token.
+        endpoint = `/api/post/saved`;
+        requiresAuth = true;
+        break;
+    }
+
     if (!endpoint) return;
 
+    if (requiresAuth) {
+      if (!accessToken) {
+        setTabPostIds([]);
+        return;
+      }
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
     setTabLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`)
-      .then((res) => res.json())
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, { headers })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`API call failed with status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => setTabPostIds(Array.isArray(data) ? data : []))
-      .catch(() => setTabPostIds([]))
+      .catch((err) => {
+        console.error(`Failed to fetch tab content for "${activeTab}":`, err);
+        setTabPostIds([]);
+      })
       .finally(() => setTabLoading(false));
-  }, [activeTab, currentUserId]);
+  }, [activeTab, currentUserId, accessToken]);
 
   function handleShowFollowers() {
     setShowPopup("followers");

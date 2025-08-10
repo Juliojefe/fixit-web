@@ -19,6 +19,7 @@ type PostSummary = {
 
 type PostSummaryListProps = {
   postIds: number[];
+  currentUserId?: number;
 };
 
 const BATCH_SIZE = 5;
@@ -44,7 +45,7 @@ function timeAgo(dateString: string) {
   return `${Math.floor(diff / 31536000)} years ago`;
 }
 
-export default function PostSummaryList({ postIds }: PostSummaryListProps) {
+export default function PostSummaryList({ postIds, currentUserId, }: PostSummaryListProps) {
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [liked, setLiked] = useState<{ [postId: number]: boolean }>({});
