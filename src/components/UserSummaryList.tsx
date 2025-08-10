@@ -24,6 +24,7 @@ export type UserSummary = {
 
 type UserSummaryListProps = {
   userIds: number[];
+   currentUserId: number;
   renderUser: (
     user: UserSummary,
     idx: number,
@@ -36,6 +37,7 @@ type UserSummaryListProps = {
 
 export default function UserSummaryList({
   userIds,
+  currentUserId,
   renderUser,
   onAction,
   style,
