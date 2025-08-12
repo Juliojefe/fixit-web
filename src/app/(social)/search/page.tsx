@@ -5,14 +5,6 @@ import React, { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, setUser } = useUser();
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user, router]);
-  
-  if (!user) return null;  
 
   return (
     <div style={{

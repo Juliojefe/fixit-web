@@ -19,7 +19,7 @@ type PostSummary = {
 
 export default function CreatePage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, accessToken, isLoading: isAuthLoading } = useUser();
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -28,10 +28,10 @@ export default function CreatePage() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthLoading && !user) {
       router.push("/login");
     }
-  }, [user, router]);
+  }, [user, isAuthLoading, router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -45,7 +45,7 @@ export default function CreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!user || !accessToken) {
       setError("You must be logged in to create a post.");
       return;
     }
@@ -59,7 +59,6 @@ export default function CreatePage() {
 
     const formData = new FormData();
     formData.append("description", description);
-    formData.append("user_id", String(user.userId));
     formData.append("createdAt", new Date().toISOString());
     
     images.forEach((image) => {
@@ -68,11 +67,13 @@ export default function CreatePage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/create-post-images`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/create/images`,
         {
           method: "POST",
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          },
           body: formData,
-          credentials: 'include',
         }
       );
 
@@ -97,7 +98,7 @@ export default function CreatePage() {
     setError(null);
   };
 
-  if (!user) {
+  if (isAuthLoading || !user) {
     return <div>Loading...</div>;
   }
 
