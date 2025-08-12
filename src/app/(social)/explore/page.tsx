@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import UserSummaryList from "@/components/UserSummaryList";
 import { useUser } from "../../../context/UserContext";
 
@@ -7,10 +8,17 @@ const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
 
 export default function ExplorePage() {
+  const router = useRouter(); // Use the hook
   const [userIds, setUserIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, accessToken } = useUser();
+  const { user, accessToken, isLoading } = useUser();
   const currentUserId = user?.userId;
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [isLoading, user, router]);
 
   useEffect(() => {
     async function fetchUserIds() {
@@ -106,9 +114,10 @@ export default function ExplorePage() {
             <div style={{ textAlign: "center", color: "#888", padding: "2rem 0" }}>
               Loading users...
             </div>
-          ) : (
+          ) : currentUserId ? (
             <UserSummaryList
               userIds={userIds}
+              currentUserId={currentUserId}
               renderUser={(user, idx, handleAction) => (
                 <div
                   key={user.id}
@@ -188,6 +197,8 @@ export default function ExplorePage() {
                 </div>
               )}
             />
+          ) : (
+            null
           )}
         </div>
       </div>
