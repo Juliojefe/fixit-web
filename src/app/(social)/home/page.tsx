@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react"; // Import useCallback
+import React, { useEffect, useState, useCallback } from "react";
 import { useUser } from "../../../context/UserContext";
 import PostSummaryList from "@/components/PostSummaryList";
 
@@ -9,11 +9,7 @@ export default function HomePage() {
   const [postIds, setPostIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // It depends on accessToken, so it will be re-created if the token changes.
   const fetchPostIds = useCallback(async () => {
-    // Add this console log to see the exact token being used.
-    // console.log("Attempting to fetch post IDs with token:", accessToken);
-
     if (!accessToken) {
       console.error("Fetch aborted: No access token available.");
       return;
@@ -22,7 +18,7 @@ export default function HomePage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/post/all-ids`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/post/following`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
