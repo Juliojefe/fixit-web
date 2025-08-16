@@ -270,9 +270,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   followListPopup: { background: "#fff", borderRadius: "12px", width: "100%", maxWidth: 400, height: "70vh", maxHeight: 500, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", position: "relative" },
   followListTitle: { padding: "1rem", margin: 0, textAlign: "center", borderBottom: "1px solid #eee", color: "#0070f3" },
   closeButton: { position: "absolute", top: 8, right: 16, background: "none", border: "none", fontSize: "1.8rem", color: "#888", cursor: "pointer" },
-  userRow: { display: "flex", alignItems: "center", gap: "1rem", padding: "0.8rem 1.5rem", borderBottom: "1px solid #eee" },
+  userRow: { display: "flex", alignItems: "center", gap: "1.2rem", padding: "0.8rem 1.5rem", borderBottom: "1px solid #ddd" },
   userRowPic: { width: 40, height: 40, borderRadius: "50%", objectFit: "cover" },
-  userRowName: { flex: 1, fontWeight: 500, fontSize: "1.05rem" },
+  userRowName: { flex: 1, fontWeight: 500, fontSize: "1.05rem", color: '#222' },
   followButton: { background: "#0070f3", color: "#fff", border: "none", borderRadius: "8px", padding: "0.4rem 1.2rem", fontWeight: "bold", cursor: "pointer", fontSize: "1rem", minWidth: 90, textAlign: "center" },
   followingButton: { background: "#eee", color: "#222", border: "1px solid #ddd", borderRadius: "8px", padding: "0.4rem 1.2rem", fontWeight: "bold", cursor: "pointer", fontSize: "1rem", minWidth: 90, textAlign: "center" },
 };
