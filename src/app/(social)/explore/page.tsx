@@ -133,6 +133,7 @@ export default function ExplorePage() {
                   }}
                 >
                   <div
+                    onClick={() => router.push(`/profile/${user.id}`)}
                     style={{
                       width: 40,
                       height: 40,
@@ -146,6 +147,7 @@ export default function ExplorePage() {
                       color: "#fff",
                       flexShrink: 0,
                       overflow: "hidden",
+                      cursor: "pointer",
                     }}
                   >
                     <img
@@ -202,6 +204,111 @@ export default function ExplorePage() {
           )}
         </div>
       </div>
+      <div style={styles.followListPopup} onClick={(e) => e.stopPropagation()}>
+        <h2 style={styles.followListTitle}>{showFollowList === "followers" ? "Followers" : "Following"}</h2>
+        <button onClick={handleClosePopup} style={styles.closeButton}>×</button>
+        {viewer?.userId && (
+          <UserSummaryList
+            userIds={popupUserIds}
+            currentUserId={viewer.userId}
+            renderUser={(user, idx, handleActionInPopup) => (
+              <div key={user.id} style={styles.userRow}>
+                <img src={user.profilePic || DEFAULT_PROFILE} alt={user.name} style={styles.userRowPic} />
+                <span style={styles.userRowName}>{user.name}</span>
+                <button
+                  onClick={() =>
+                    handleActionInPopup(
+                      user.follows ? "unfollow" : "follow",
+                      user,
+                      idx
+                    )
+                  }
+                  style={user.follows ? styles.followingButton : styles.followButton}
+                >
+                  {user.follows ? "Following" : "Follow"}
+                </button>
+              </div>
+            )}
+          />
+        )}
+      </div>
     </div>
   );
 }
+
+const styles = {
+  followListPopup: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    background: "#fff",
+    borderRadius: "12px",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
+    padding: "2rem",
+    width: "90vw",
+    maxWidth: "400px",
+    zIndex: 1000,
+  },
+  followListTitle: {
+    fontSize: "1.5rem",
+    fontWeight: "600",
+    marginBottom: "1rem",
+    color: "#333",
+  },
+  closeButton: {
+    position: "absolute",
+    top: "1rem",
+    right: "1rem",
+    background: "none",
+    border: "none",
+    fontSize: "1.5rem",
+    cursor: "pointer",
+    color: "#aaa",
+  },
+  userRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.8rem",
+    padding: "0.8rem 0",
+    borderBottom: "1px solid #eee",
+  },
+  userRowPic: {
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    objectFit: "cover",
+  },
+  userRowName: {
+    flex: 1,
+    fontWeight: 500,
+    fontSize: "1rem",
+    color: "#222",
+  },
+  followButton: {
+    background: "#0070f3",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "0.4rem 1rem",
+    fontWeight: "bold",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    minWidth: 80,
+    textAlign: "center",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    transition: "background 0.2s, color 0.2s",
+  },
+  followingButton: {
+    background: "#eee",
+    color: "#222",
+    border: "none",
+    borderRadius: "8px",
+    padding: "0.4rem 1rem",
+    fontWeight: "bold",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    minWidth: 80,
+    textAlign: "center",
+  },
+};

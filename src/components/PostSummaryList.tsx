@@ -2,9 +2,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaHeart, FaRegHeart, FaRegComment, FaRegBookmark, FaBookmark } from "react-icons/fa";
 import { useUser } from "../context/UserContext";
+import { useRouter } from "next/navigation";
 
 type PostSummary = {
   id: number;
+  authorId: number; // authorId
   description: string;
   createdBy: string;
   createdByProfilePicUrl: string;
@@ -55,6 +57,7 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
 
   const contentRef = useRef<HTMLDivElement>(null);
   const { user, accessToken } = useUser();
+  const router = useRouter();
 
   // Fetch a batch of posts
   const fetchPostBatch = useCallback(
@@ -264,8 +267,8 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
                 border: "2px solid #eee",
                 cursor: "pointer",
               }}
-              onClick={() => alert("Profile under construction")}
-              title="Profile under construction"
+              onClick={() => router.push(`/profile/${post.authorId}`)}
+              title={`View ${post.createdBy}'s profile`}
             >
               <img
                 src={post.createdByProfilePicUrl}

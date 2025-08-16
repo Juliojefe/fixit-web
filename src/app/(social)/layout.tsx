@@ -52,7 +52,7 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
   }
 
   function handleProfileClick() {
-    router.push("/profile");
+    router.push(`/profile/${user?.userId}`);
   }
 
   return (
@@ -90,11 +90,14 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
         </div>
         <nav style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0 }}>
           {sidebarItems.map((item) => {
-            const isActive = pathname === item.route;
+            const isActive = pathname.startsWith(item.route);
+            
+            const targetRoute = item.route === "/profile" ? `/profile/${user.userId}` : item.route;
+
             return (
               <button
                 key={item.label}
-                onClick={() => router.push(item.route)}
+                onClick={() => router.push(targetRoute)}
                 style={{
                   display: "flex",
                   alignItems: "center",
