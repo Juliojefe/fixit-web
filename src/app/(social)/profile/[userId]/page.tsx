@@ -176,7 +176,7 @@ export default function ProfilePage() {
       <div style={styles.container}>
         {/* Profile Header Card */}
         <div style={styles.profileCard}>
-          <img src={profileData.profilePicUrl || DEFAULT_PROFILE} alt="Profile" style={styles.profilePic} />
+          <img src={profileData.profilePicUrl || DEFAULT_PROFILE} alt={profileData.name} style={styles.profilePic} />
           <div style={styles.name}>{profileData.name}</div>
           <div style={styles.statsContainer}>
             <button onClick={() => setShowFollowList("followers")} style={styles.statButton}>
