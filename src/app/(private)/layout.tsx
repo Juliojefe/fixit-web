@@ -1,50 +1,33 @@
 "use client";
+import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "../../context/UserContext";
-import { useEffect } from "react";
-import { FaHome, FaUser, FaEnvelope, FaBell, FaSearch, FaSignOutAlt, FaPlusCircle, FaCompass } from "react-icons/fa";
+import { FaHome, FaCompass, FaPlusSquare, FaBell, FaUser, FaEnvelope, FaSearch } from "react-icons/fa"; // Import FaSearch
 
 const sidebarItems = [
-  { label: "Home", icon: <FaHome />, route: "/home" },
-  { label: "Profile", icon: <FaUser />, route: "/profile" },
-  { label: "Messages", icon: <FaEnvelope />, route: "/chats" },
-  { label: "Notifications", icon: <FaBell />, route: "/notifications" },
-  { label: "Explore", icon: <FaCompass />, route: "/explore" },
-  { label: "Search", icon: <FaSearch />, route: "/search" },
-  { label: "Create", icon: <FaPlusCircle />, route: "/create" },
+  { label: "Home", icon: FaHome, route: "/home" },
+  { label: "Search", icon: FaSearch, route: "/search" },
+  { label: "Explore", icon: FaCompass, route: "/explore" },
+  { label: "Create", icon: FaPlusSquare, route: "/create" },
+  { label: "Notifications", icon: FaBell, route: "/notifications" },
+  { label: "Chats", icon: FaEnvelope, route: "/chats" },
+  { label: "Profile", icon: FaUser, route: "/profile" },
 ];
 
-const DEFAULT_PROFILE =
-  "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
-
-export default function SocialLayout({ children }: { children: React.ReactNode }) {
+export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, isLoading } = useUser();
+  const { user, isLoading, logout } = useUser();
 
   useEffect(() => {
-    // Wait until the initial loading is complete
-    if (!isLoading) {
-      // If there's no user after checking, then redirect to login
-      if (!user) {
-        router.push("/login");
-      }
+    if (!isLoading && !user) {
+      router.push("/login");
     }
-  }, [user, isLoading, router]);
+  }, [isLoading, user, router]);
 
-  // While the context is checking for a session, show a loading screen.
-  // This prevents the layout from flashing before the user is redirected.
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f5f6fa' }}>
-        <p>Loading session...</p>
-      </div>
-    );
+  if (isLoading || !user) {
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   }
-
-  // If loading is done and there's still no user, return null to prevent rendering the layout
-  // just before the redirect happens.
-  if (!user) return null;
 
   function handleLogout() {
     logout();
@@ -56,43 +39,14 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "#f5f6fa",
-      }}
-    >
+    <div style={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
-      <aside
-        style={{
-          width: 240,
-          background: "#fff",
-          borderRight: "1px solid #e0e0e0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          padding: "2rem 0 1rem 0",
-          gap: "2rem",
-        }}
-      >
-        <div
-          style={{
-            fontWeight: "bold",
-            fontSize: "1.5rem",
-            color: "#0070f3",
-            paddingLeft: "2rem",
-            textAlign: "left",
-            marginBottom: "0.5rem",
-          }}
-        >
-          FixIt
-        </div>
+      <div style={{ width: 250, background: "#fff", borderRight: "1px solid #dbdbdb", padding: "2rem 1rem", display: "flex", flexDirection: "column" }}>
+        <div style={{ fontSize: "1.8rem", fontWeight: "bold", padding: "0 1rem 2rem 1rem", color: "#0070f3" }}>FixIt</div>
         <nav style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0 }}>
           {sidebarItems.map((item) => {
             const isActive = pathname.startsWith(item.route);
-            
-            const targetRoute = item.route === "/profile" ? `/profile/${user.userId}` : item.route;
+            const targetRoute = item.label === "Profile" ? `/profile/${user.userId}` : item.route;
 
             return (
               <button
@@ -102,93 +56,32 @@ export default function SocialLayout({ children }: { children: React.ReactNode }
                   display: "flex",
                   alignItems: "center",
                   gap: "1rem",
-                  width: "100%",
-                  background: isActive ? "#e3f0ff" : "none",
+                  padding: "0.8rem 1rem",
+                  background: isActive ? "#eef5ff" : "transparent",
                   border: "none",
-                  color: isActive ? "#0070f3" : "#222",
-                  fontSize: "1.1rem",
-                  padding: "1rem 2rem",
+                  borderRadius: "8px",
+                  textAlign: "left",
                   cursor: "pointer",
-                  fontWeight: "bold",
-                  borderRadius: "0 24px 24px 0",
-                  transition: "background 0.2s, color 0.2s",
-                  boxShadow: isActive ? "0 2px 8px rgba(0,112,243,0.08)" : "none",
+                  color: isActive ? "#0070f3" : "#333",
+                  fontWeight: isActive ? "bold" : "normal",
                 }}
               >
-                <span style={{ fontSize: "1.3rem" }}>{item.icon}</span>
-                {item.label}
+                <item.icon size={22} />
+                <span>{item.label}</span>
               </button>
             );
           })}
-          <button
-            onClick={handleLogout}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              width: "100%",
-              background: "none",
-              border: "none",
-              color: "#d32f2f",
-              fontSize: "1.1rem",
-              padding: "1rem 2rem",
-              cursor: "pointer",
-              fontWeight: "bold",
-              borderRadius: "0 24px 24px 0",
-              transition: "background 0.2s",
-            }}
-          >
-            <span style={{ fontSize: "1.3rem" }}><FaSignOutAlt /></span>
+        </nav>
+        <div style={{ marginTop: "auto" }}>
+          <button onClick={handleLogout} style={{ width: "100%", padding: "0.8rem", background: "#fdecec", color: "#c53030", border: "none", borderRadius: "8px", cursor: "pointer" }}>
             Logout
           </button>
-        </nav>
-      </aside>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <main
-        style={{
-          flex: 1,
-          overflow: "hidden",      // Prevent scroll by default
-          height: "100vh",         // Lock to viewport height
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* Top Bar */}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            padding: "1.5rem 2.5rem 1.5rem 0",
-            background: "transparent",
-            borderBottom: "1px solid #e0e0e0",
-            minHeight: 80,
-          }}
-        >
-          <span style={{ marginRight: "1rem", fontWeight: "bold", color: "#222", fontSize: "1.1rem" }}>
-            {user?.name}
-          </span>
-          <img
-            src={user?.profilePic && user.profilePic !== "" ? user.profilePic : DEFAULT_PROFILE}
-            alt="Profile"
-            onClick={handleProfileClick}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              objectFit: "cover",
-              cursor: "pointer",
-              border: "2px solid #0070f3",
-              background: "#eee",
-            }}
-          />
-        </div>
-        {/* Page Content */}
-        <div style={{ flex: 1, height: "100%", overflow: "hidden" }}>
-          {children}
-        </div>
+      <main style={{ flex: 1, background: "#f5f6fa", overflowY: "auto" }}>
+        {children}
       </main>
     </div>
   );

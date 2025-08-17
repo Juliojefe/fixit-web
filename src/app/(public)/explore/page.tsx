@@ -15,12 +15,6 @@ export default function ExplorePage() {
   const currentUserId = user?.userId;
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-    }
-  }, [isLoading, user, router]);
-
-  useEffect(() => {
     async function fetchUserIds() {
       if (!accessToken) {
         setLoading(false);
