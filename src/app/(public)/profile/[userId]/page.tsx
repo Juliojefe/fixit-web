@@ -16,7 +16,7 @@ interface ProfileData {
   followingIds: number[];
   ownedPostIds: number[];
   likedPostIds: number[];
-  savedPostIds?: number[]; // Only for the logged-in user
+  savedPostIds?: number[];
 }
 
 interface FollowStatus {
@@ -32,13 +32,12 @@ export default function ProfilePage() {
   const params = useParams();
   const profileUserId = Number(params.userId);
 
-  const { user: viewer, accessToken } = useUser();
+  const { user: viewer, accessToken, showLoginPopup } = useUser();
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
   const [loading, setLoading] = useState(true);
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showFollowList, setShowFollowList] = useState<"followers" | "following" | null>(null);
   const [pendingActions, setPendingActions] = useState<{ id: number; action: "follow" | "unfollow" }[]>([]);
 
@@ -85,7 +84,7 @@ export default function ProfilePage() {
   // --- ACTIONS & HANDLERS ---
   const handleFollowAction = useCallback((action: "follow" | "unfollow", targetUserId: number) => {
     if (!accessToken) {
-      setShowLoginPopup(true);
+      showLoginPopup();
       return Promise.resolve();
     }
 
@@ -112,7 +111,7 @@ export default function ProfilePage() {
       method,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-  }, [accessToken, profileUserId, followStatus]);
+  }, [accessToken, profileUserId, followStatus, showLoginPopup]);
 
   const handleClosePopup = () => {
     if (pendingActions.length > 0 && isOwnProfile) {
@@ -144,7 +143,7 @@ export default function ProfilePage() {
   const getTabPostIds = () => {
     if (!profileData) return [];
     if (activeTab === 'posts') return profileData.ownedPostIds;
-    if (activeTab === 'liked') return profileData.likedPostIds;
+    if (activeTab === 'liked' && profileData.likedPostIds) return profileData.likedPostIds;
     if (activeTab === 'saved' && isOwnProfile) return profileData.savedPostIds || [];
     return [];
   };
@@ -161,17 +160,6 @@ export default function ProfilePage() {
 
   return (
     <>
-      {/* Login Popup */}
-      {showLoginPopup && (
-        <div style={styles.popupOverlay} onClick={() => setShowLoginPopup(false)}>
-          <div style={styles.loginPopup} onClick={(e) => e.stopPropagation()}>
-            <h3>Action Required</h3>
-            <p>Please log in or create an account to continue.</p>
-            <button onClick={() => router.push('/login')} style={styles.loginButton}>Login / Sign Up</button>
-          </div>
-        </div>
-      )}
-
       {/* Main Page Content */}
       <div style={styles.container}>
         {/* Profile Header Card */}
@@ -264,9 +252,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   tab: { background: "none", border: "none", color: "#222", fontWeight: "normal", fontSize: "1.1rem", borderBottom: "2px solid transparent", padding: "0.5rem 1rem", cursor: "pointer", transition: "color 0.2s, border-bottom 0.2s" },
   activeTab: { background: "none", border: "none", color: "#0070f3", fontWeight: "bold", fontSize: "1.1rem", borderBottom: "2px solid #0070f3", padding: "0.5rem 1rem", cursor: "pointer", transition: "color 0.2s, border-bottom 0.2s" },
   postListContainer: { width: "100%", minHeight: 400, background: "#fafbfc", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
-  popupOverlay: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
-  loginPopup: { background: "#fff", borderRadius: "12px", padding: "2rem", textAlign: "center", boxShadow: "0 5px 15px rgba(0,0,0,0.3)" },
-  loginButton: { marginTop: "1rem", padding: "0.6rem 1.2rem", background: "#0070f3", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
   followListPopup: { background: "#fff", borderRadius: "12px", width: "100%", maxWidth: 400, height: "70vh", maxHeight: 500, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", position: "relative" },
   followListTitle: { padding: "1rem", margin: 0, textAlign: "center", borderBottom: "1px solid #eee", color: "#0070f3" },
   closeButton: { position: "absolute", top: 8, right: 16, background: "none", border: "none", fontSize: "1.8rem", color: "#888", cursor: "pointer" },

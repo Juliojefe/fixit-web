@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 
 export type User = {
@@ -22,27 +22,22 @@ type AuthResponse = Omit<User, 'userId'> & {
   refreshToken: string;
 };
 
-type UserContextType = {
+interface UserContextType {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  // Update the login function signature to accept an optional callback
-  login: (authData: AuthResponse, callback?: () => void) => void;
+  login: (authData: AuthResponse) => void;
   logout: () => void;
-};
+  showLoginPopup: () => void;
+}
 
-const UserContext = createContext<UserContextType>({
-  user: null,
-  accessToken: null,
-  isLoading: true,
-  login: () => {},
-  logout: () => {},
-});
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
+export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoginPopupVisible, setLoginPopupVisible] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const stopTokenRefreshInterval = useCallback(() => {
@@ -61,7 +56,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     stopTokenRefreshInterval();
   }, [stopTokenRefreshInterval]);
 
-  // This function's ONLY job is to get a new token. It does not set state.
   const getNewToken = useCallback(async () => {
     const storedRefreshToken = localStorage.getItem("refreshToken");
     if (!storedRefreshToken) {
@@ -75,12 +69,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!res.ok) {
-        // If refresh fails, log the user out as the session is invalid.
         logout();
         return null;
       }
 
-      // The response is {"accessToken": "..."}. We parse it and return the token string.
       const data = await res.json();
       if (typeof data.accessToken !== 'string') {
         throw new Error("Invalid token format received from server.");
@@ -95,7 +87,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   const startTokenRefreshInterval = useCallback(() => {
-    stopTokenRefreshInterval(); // Clear any existing interval first
+    stopTokenRefreshInterval();
 
     const id = setInterval(async () => {
       console.log("Scheduled token refresh initiated.");
@@ -104,18 +96,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setAccessToken(newAccessToken);
         localStorage.setItem("accessToken", newAccessToken);
       }
-    }, 55 * 60 * 1000); // 55 minutes
+    }, 55 * 60 * 1000);
     intervalRef.current = id;
   }, [getNewToken, stopTokenRefreshInterval]);
 
-  // On initial load, restore the session.
   useEffect(() => {
     const init = async () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const newAccessToken = await getNewToken();
         if (newAccessToken) {
-          // Set both pieces of state together to prevent race conditions.
           setAccessToken(newAccessToken);
           setUser(JSON.parse(storedUser));
           localStorage.setItem("accessToken", newAccessToken);
@@ -128,52 +118,58 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return stopTokenRefreshInterval;
   }, [getNewToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
 
-  // The login function takes one object and splits it
-  // into the user data and the tokens for state and storage.
-  const login = useCallback((authData: AuthResponse, callback?: () => void) => {
+  const login = (authData: AuthResponse) => {
     const { accessToken, refreshToken, ...userDataFromApi } = authData;
 
-    // Decode the token to get the real userId
     const decodedToken: DecodedToken = jwtDecode(accessToken);
     const completeUser: User = { ...userDataFromApi, userId: decodedToken.userId };
 
     setUser(completeUser);
     setAccessToken(accessToken);
 
-    // Store the complete user object and tokens
     localStorage.setItem("user", JSON.stringify(completeUser));
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
 
     startTokenRefreshInterval();
+  };
 
-    // If a callback function was provided, call it.
-    if (callback) {
-      callback();
-    }
-  }, [startTokenRefreshInterval]);
+  const showLoginPopup = useCallback(() => {
+    setLoginPopupVisible(true);
+  }, []);
 
-  // This function runs on page load to restore the session
-  const init = useCallback(async () => {
-    const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("accessToken");
+  const value = { user, accessToken, isLoading, login, logout, showLoginPopup };
 
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      setAccessToken(storedToken);
-      startTokenRefreshInterval();
-    }
-    setIsLoading(false);
-  }, [startTokenRefreshInterval]);
-
-  useEffect(() => {
-    init();
-    return stopTokenRefreshInterval;
-  }, [init, stopTokenRefreshInterval]);
-
-  const value = { user, accessToken, isLoading, login, logout };
-
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={value}>
+      {children}
+      {isLoginPopupVisible && (
+        <div style={popupStyles.overlay} onClick={() => setLoginPopupVisible(false)}>
+          <div style={popupStyles.popup} onClick={(e) => e.stopPropagation()}>
+            <h3 style={popupStyles.title}>Login Required</h3>
+            <p style={popupStyles.text}>You need to be logged in to perform this action.</p>
+            <button onClick={() => window.location.href = '/login'} style={popupStyles.button}>Login / Sign Up</button>
+            <button onClick={() => setLoginPopupVisible(false)} style={{...popupStyles.button, ...popupStyles.cancelButton}}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </UserContext.Provider>
+  );
 }
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+};
+
+const popupStyles: { [key: string]: React.CSSProperties } = {
+  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
+  popup: { background: 'white', padding: '2rem', borderRadius: 12, textAlign: 'center', minWidth: 320, boxShadow: '0 5px 15px rgba(0,0,0,0.3)' },
+  title: { margin: '0 0 0.5rem 0', color: '#000000', fontSize: '1.25rem', fontWeight: 'bold' },
+  text: { margin: '0 0 1.5rem 0', color: '#333333' },
+  button: { padding: '0.6rem 1.2rem', borderRadius: 8, border: 'none', cursor: 'pointer', margin: '0 0.5rem', fontWeight: 600, background: '#007bff', color: '#ffffff' },
+  cancelButton: { background: '#e9ecef', color: '#212529', border: '1px solid #ced4da' },
+};
