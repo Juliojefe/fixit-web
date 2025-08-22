@@ -118,7 +118,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return stopTokenRefreshInterval;
   }, [getNewToken, startTokenRefreshInterval, stopTokenRefreshInterval]);
 
-  const login = (authData: AuthResponse) => {
+  const login = useCallback((authData: AuthResponse) => {
     const { accessToken, refreshToken, ...userDataFromApi } = authData;
 
     const decodedToken: DecodedToken = jwtDecode(accessToken);
@@ -132,7 +132,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("refreshToken", refreshToken);
 
     startTokenRefreshInterval();
-  };
+  }, [startTokenRefreshInterval]);
 
   const showLoginPopup = useCallback(() => {
     setLoginPopupVisible(true);
