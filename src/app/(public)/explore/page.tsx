@@ -8,17 +8,11 @@ const DEFAULT_PROFILE =
   "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
 
 export default function ExplorePage() {
-  const router = useRouter(); // Use the hook
+  const router = useRouter();
   const [userIds, setUserIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, accessToken, isLoading } = useUser();
   const currentUserId = user?.userId;
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-    }
-  }, [isLoading, user, router]);
 
   useEffect(() => {
     async function fetchUserIds() {
@@ -53,9 +47,8 @@ export default function ExplorePage() {
     }
   }, [currentUserId, accessToken]);
 
-  // HEIGHTS
-  const CARD_HEIGHT = 600; // px, adjust as needed
-  const HEADER_HEIGHT = 80; // px, adjust if you change h1/padding
+  const CARD_HEIGHT = 600;
+  const HEADER_HEIGHT = 80;
 
   return (
     <div
@@ -66,8 +59,8 @@ export default function ExplorePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center", // center vertically
-        overflow: "hidden", // prevent page scroll
+        justifyContent: "center",
+        overflow: "hidden",
       }}
     >
       <div
@@ -84,7 +77,7 @@ export default function ExplorePage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
-          marginTop: "-110px", // Move card up or down
+          marginTop: "-110px",
         }}
       >
         <h1
@@ -107,7 +100,10 @@ export default function ExplorePage() {
             border: "1px solid #f0f0f0",
             background: "#fafbfc",
             boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-            minHeight: 0, // for flexbox scroll
+            minHeight: 0,
+            flex: 1,
+            overflowY: 'auto',
+            padding: '0 1.5rem'
           }}
         >
           {loading ? (
@@ -125,14 +121,13 @@ export default function ExplorePage() {
                     display: "flex",
                     alignItems: "center",
                     gap: "1rem",
-                    marginBottom: "1.2rem",
                     borderBottom: "1px solid #eee",
-                    paddingBottom: "0.8rem",
-                    paddingTop: idx === 0 ? "0" : "0.8rem",
+                    padding: "0.8rem 0",
                     minHeight: 56,
                   }}
                 >
                   <div
+                    onClick={() => router.push(`/profile/${user.id}`)}
                     style={{
                       width: 40,
                       height: 40,
@@ -146,6 +141,7 @@ export default function ExplorePage() {
                       color: "#fff",
                       flexShrink: 0,
                       overflow: "hidden",
+                      cursor: "pointer",
                     }}
                   >
                     <img
@@ -198,7 +194,9 @@ export default function ExplorePage() {
               )}
             />
           ) : (
-            null
+            <div style={{ textAlign: "center", color: "#888", padding: "2rem 0" }}>
+              Could not load users.
+            </div>
           )}
         </div>
       </div>
