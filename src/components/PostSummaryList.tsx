@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 type PostSummary = {
   id: number;
-  authorId: number; // authorId
+  authorId: number; // userId
   description: string;
   createdBy: string;
   createdByProfilePicUrl: string;
@@ -56,22 +56,17 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
   const [imageIndex, setImageIndex] = useState<{ [postId: number]: number }>({});
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const { user, accessToken } = useUser();
+  const { user, accessToken, showLoginPopup } = useUser();
   const router = useRouter();
 
   // Fetch a batch of posts
   const fetchPostBatch = useCallback(
     async (ids: number[]) => {
-      if (!accessToken || !user) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
           ids.map(async (id) => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/post/${id}`);
             const data = await res.json();
             return { ...data, id };
           })
@@ -84,21 +79,30 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
         setLiked((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            batch.map((post) => [post.id, Array.isArray(post.likeIds) && post.likeIds.includes(user.userId)])
+            batch.map((post) => [
+              post.id,
+              // Only check for likes if a user is logged in.
+              user ? (Array.isArray(post.likeIds) && post.likeIds.includes(user.userId)) : false,
+            ])
           ),
         }));
         setSaved((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            batch.map((post) => [post.id, Array.isArray(post.savedIds) && post.savedIds.includes(user.userId)])
+            batch.map((post) => [
+              post.id,
+              // Only check for saves if a user is logged in.
+              user ? (Array.isArray(post.savedIds) && post.savedIds.includes(user.userId)) : false,
+            ])
           ),
         }));
       } catch (e) {
+        console.error("Failed to fetch post batch:", e);
       } finally {
         setLoading(false);
       }
     },
-    [user, accessToken]
+    [user] // We only need user here to correctly set the like/save status
   );
 
   useEffect(() => {
@@ -129,7 +133,10 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
   }, [handleScroll]);
 
   const handleLike = async (postId: number) => {
-    if (!accessToken || !user) return;
+    if (!accessToken || !user) {
+      showLoginPopup();
+      return;
+    }
     const wasLiked = liked[postId];
     
     // Optimistically update UI
@@ -178,7 +185,10 @@ export default function PostSummaryList({ postIds, currentUserId, }: PostSummary
   };
 
   const handleSave = async (postId: number) => {
-    if (!accessToken || !user) return;
+    if (!accessToken || !user) {
+      showLoginPopup();
+      return;
+    }
     const wasSaved = saved[postId];
 
     // Optimistically update UI

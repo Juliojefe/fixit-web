@@ -141,11 +141,19 @@ export default function ProfilePage() {
   };
 
   const getTabPostIds = () => {
-    if (!profileData) return [];
-    if (activeTab === 'posts') return profileData.ownedPostIds;
-    if (activeTab === 'liked' && profileData.likedPostIds) return profileData.likedPostIds;
-    if (activeTab === 'saved' && isOwnProfile) return profileData.savedPostIds || [];
-    return [];
+    if (!profileData) {
+      return [];
+    }
+    switch (activeTab) {
+      case 'posts':
+        return profileData.ownedPostIds || [];
+      case 'liked':
+        return profileData.likedPostIds || [];
+      case 'saved':
+        return isOwnProfile ? (profileData.savedPostIds || []) : [];
+      default:
+        return [];
+    }
   };
 
   // --- RENDER LOGIC ---
