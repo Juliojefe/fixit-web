@@ -166,7 +166,7 @@ export const useUser = () => {
 };
 
 const popupStyles: { [key: string]: React.CSSProperties } = {
-  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
+  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.2)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
   popup: { background: 'white', padding: '2rem', borderRadius: 12, textAlign: 'center', minWidth: 320, boxShadow: '0 5px 15px rgba(0,0,0,0.3)' },
   title: { margin: '0 0 0.5rem 0', color: '#000000', fontSize: '1.25rem', fontWeight: 'bold' },
   text: { margin: '0 0 1.5rem 0', color: '#333333' },

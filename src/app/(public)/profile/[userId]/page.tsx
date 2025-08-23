@@ -252,6 +252,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   tab: { background: "none", border: "none", color: "#222", fontWeight: "normal", fontSize: "1.1rem", borderBottom: "2px solid transparent", padding: "0.5rem 1rem", cursor: "pointer", transition: "color 0.2s, border-bottom 0.2s" },
   activeTab: { background: "none", border: "none", color: "#0070f3", fontWeight: "bold", fontSize: "1.1rem", borderBottom: "2px solid #0070f3", padding: "0.5rem 1rem", cursor: "pointer", transition: "color 0.2s, border-bottom 0.2s" },
   postListContainer: { width: "100%", minHeight: 400, background: "#fafbfc", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
+  popupOverlay: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
   followListPopup: { background: "#fff", borderRadius: "12px", width: "100%", maxWidth: 400, height: "70vh", maxHeight: 500, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", position: "relative" },
   followListTitle: { padding: "1rem", margin: 0, textAlign: "center", borderBottom: "1px solid #eee", color: "#0070f3" },
   closeButton: { position: "absolute", top: 8, right: 16, background: "none", border: "none", fontSize: "1.8rem", color: "#888", cursor: "pointer" },
