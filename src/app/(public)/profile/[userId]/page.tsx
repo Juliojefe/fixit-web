@@ -215,9 +215,9 @@ export default function ProfilePage() {
             <UserSummaryList
               userIds={popupUserIds}
               currentUserId={viewer?.userId}
-              renderUser={(user, idx, handleActionInPopup) => (
+              renderUser={(user, idx, handleActionInPopup, onProfileClick) => (
                 <div key={user.id} style={styles.userRow}>
-                  <img src={user.profilePic || DEFAULT_PROFILE} alt={user.name} style={styles.userRowPic} />
+                  <img src={user.profilePic || DEFAULT_PROFILE} alt={user.name} style={{...styles.userRowPic, cursor: "pointer"}} onClick={onProfileClick} />
                   <span style={styles.userRowName}>{user.name}</span>
                   {/* This check correctly prevents showing a follow button for yourself */}
                   {viewer?.userId !== user.id && (

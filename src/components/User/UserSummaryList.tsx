@@ -29,7 +29,8 @@ type UserSummaryListProps = {
   renderUser: (
     user: UserSummary,
     idx: number,
-    handleAction: (action: "follow" | "unfollow", user: UserSummary, idx: number) => Promise<void>
+    handleAction: (action: "follow" | "unfollow", user: UserSummary, idx: number) => Promise<void>,
+    onProfileClick: () => void
   ) => React.ReactNode;
   onAction?: (userId: number, action: "follow" | "unfollow") => void;
   style?: React.CSSProperties;
@@ -202,7 +203,7 @@ export default function UserSummaryList({
         <div style={{ color: "#888" }}>No users found.</div>
       ) : (
         users.map((user, idx) =>
-          renderUser(user, idx, handleAction)
+          renderUser(user, idx, handleAction, () => router.push(`/profile/${user.id}`))
         )
       )}
       {loading && users.length > 0 && (
