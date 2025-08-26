@@ -25,7 +25,7 @@ export type UserSummary = {
 
 type UserSummaryListProps = {
   userIds: number[];
-   currentUserId: number;
+  currentUserId?: number;
   renderUser: (
     user: UserSummary,
     idx: number,
@@ -50,25 +50,41 @@ export default function UserSummaryList({
   const [loadedCount, setLoadedCount] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { accessToken } = useUser();
+  const { accessToken, showLoginPopup } = useUser();
 
   const fetchUserBatch = useCallback(
     async (ids: number[]) => {
-      if (!accessToken || ids.length === 0) return;
+      if (ids.length === 0) return;
       setLoading(true);
       try {
         const batch = await Promise.all(
-          ids.map(async (id) => {
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${id}`,
-              {
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`
+          ids.map(async (id, index) => {
+            // If logged in, get full follow status.
+            if (accessToken) {
+              const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/follow/mutual/${id}`,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                  }
                 }
-              }
-            );
-            const data = await res.json();
-            return { ...data, id };
+              );
+              const data = await res.json();
+              return { ...data, id };
+            } 
+            // If not logged in
+            else {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/summary/${id}`);
+              const data = await res.json();
+              console.log(`Call #${index + 1} for user summary (ID: ${id}):`, data);
+              return {
+                id: id,
+                name: data.name,
+                profilePic: data.profilePic || DEFAULT_PROFILE,
+                follows: false,
+                followsBack: false,
+              };
+            }
           })
         );
         setUsers((prev) => [
@@ -123,7 +139,11 @@ export default function UserSummaryList({
     user: UserSummary,
     idx: number
   ) => {
-    if (!accessToken) return;
+    // If user is not logged in, show the popup and stop.
+    if (!accessToken) {
+      showLoginPopup();
+      return;
+    }
 
     const originalUsers = [...users];
     const wasFollowing = user.follows;

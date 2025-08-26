@@ -212,18 +212,18 @@ export default function ProfilePage() {
           <div style={styles.followListPopup} onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.followListTitle}>{showFollowList === "followers" ? "Followers" : "Following"}</h2>
             <button onClick={handleClosePopup} style={styles.closeButton}>×</button>
-            {viewer?.userId && (
-              <UserSummaryList
-                userIds={popupUserIds}
-                currentUserId={viewer.userId}
-                renderUser={(user, idx, handleActionInPopup) => (
-                  <div key={user.id} style={styles.userRow}>
-                    <img src={user.profilePic || DEFAULT_PROFILE} alt={user.name} style={styles.userRowPic} />
-                    <span style={styles.userRowName}>{user.name}</span>
-                    {viewer?.userId !== user.id && (
-                      <button
-                        onClick={() => {
-                          handleActionInPopup(user.follows ? "unfollow" : "follow", user, idx).then(() => {
+            <UserSummaryList
+              userIds={popupUserIds}
+              currentUserId={viewer?.userId}
+              renderUser={(user, idx, handleActionInPopup) => (
+                <div key={user.id} style={styles.userRow}>
+                  <img src={user.profilePic || DEFAULT_PROFILE} alt={user.name} style={styles.userRowPic} />
+                  <span style={styles.userRowName}>{user.name}</span>
+                  {/* This check correctly prevents showing a follow button for yourself */}
+                  {viewer?.userId !== user.id && (
+                    <button
+                      onClick={() => {
+                        handleActionInPopup(user.follows ? "unfollow" : "follow", user, idx).then(() => {
                             if (isOwnProfile) {
                               setPendingActions(prev => [...prev.filter(a => a.id !== user.id), { id: user.id, action: user.follows ? "unfollow" : "follow" }]);
                             }
@@ -233,11 +233,10 @@ export default function ProfilePage() {
                       >
                         {user.follows ? "Following" : "Follow"}
                       </button>
-                    )}
-                  </div>
-                )}
-              />
-            )}
+                  )}
+                </div>
+              )}
+            />
           </div>
         </div>
       )}

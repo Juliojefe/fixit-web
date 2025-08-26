@@ -11,21 +11,23 @@ export default function ExplorePage() {
   const router = useRouter();
   const [userIds, setUserIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, accessToken, isLoading } = useUser();
+  const { user, accessToken } = useUser(); // Removed isLoading as it's not used
   const currentUserId = user?.userId;
 
   useEffect(() => {
     async function fetchUserIds() {
-      if (!accessToken) {
-        setLoading(false);
-        return;
-      }
       setLoading(true);
       try {
+        // This endpoint is now assumed to be public.
+        // We still send the token if available, as the backend might use it
+        // to exclude the current user from the list.
+        const headers: HeadersInit = {};
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/all-ids`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+          headers: headers
         });
 
         if (!res.ok) {
@@ -33,19 +35,19 @@ export default function ExplorePage() {
         }
 
         const data = await res.json();
-        setUserIds(Array.isArray(data) && currentUserId
-          ? data.filter(id => id !== currentUserId)
-          : []);
+        // If a user is logged in, filter them out. Otherwise, show all users.
+        const allIds = Array.isArray(data) ? data : [];
+        setUserIds(currentUserId ? allIds.filter(id => id !== currentUserId) : allIds);
+
       } catch (e) {
         console.error("Error fetching user IDs:", e);
         setUserIds([]);
       }
       setLoading(false);
     }
-    if (currentUserId && accessToken) {
-      fetchUserIds();
-    }
-  }, [currentUserId, accessToken]);
+    
+    fetchUserIds();
+  }, [currentUserId, accessToken]); // Re-fetch if the user logs in/out
 
   const CARD_HEIGHT = 600;
   const HEADER_HEIGHT = 80;
@@ -110,10 +112,10 @@ export default function ExplorePage() {
             <div style={{ textAlign: "center", color: "#888", padding: "2rem 0" }}>
               Loading users...
             </div>
-          ) : currentUserId ? (
+          ) : userIds.length > 0 ? ( // Changed condition from currentUserId to userIds.length
             <UserSummaryList
               userIds={userIds}
-              currentUserId={currentUserId}
+              currentUserId={currentUserId} // Pass currentUserId (can be undefined)
               renderUser={(user, idx, handleAction) => (
                 <div
                   key={user.id}
