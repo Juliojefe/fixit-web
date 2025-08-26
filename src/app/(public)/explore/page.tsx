@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import UserSummaryList from "@/components/UserSummaryList";
+import UserSummaryList from "@/components/User/UserSummaryList";
 import { useUser } from "../../../context/UserContext";
 
 const DEFAULT_PROFILE =

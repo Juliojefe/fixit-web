@@ -3,8 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "../../../../context/UserContext";
 import React, { useEffect, useState, useCallback } from "react";
-import PostSummaryList from "@/components/PostSummaryList";
-import UserSummaryList from "@/components/UserSummaryList";
+import PostSummaryList from "@/components/Post/PostSummaryList";
+import UserSummaryList from "@/components/User/UserSummaryList";
 
 // --- TYPE DEFINITIONS ---
 interface ProfileData {

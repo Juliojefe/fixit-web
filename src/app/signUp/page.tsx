@@ -32,10 +32,8 @@ export default function SignUpPage() {
       });
 
       const authData = response.data;
-
-      login(authData, () => {
-        router.push("/home");
-      });
+      login(authData);
+      router.push("/home");
 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -46,7 +44,7 @@ export default function SignUpPage() {
     }
   }
 
-  function hangleSignIn() {
+  function handleSignIn() {
     router.push("login");
   }
 
@@ -190,7 +188,7 @@ export default function SignUpPage() {
               >Sign Up</button>
               <button
                 type = "button"
-                onClick = {hangleSignIn}
+                onClick = {handleSignIn}
                 style = {{
                   padding: "0.7rem",
                   fontWeight: "bold",
