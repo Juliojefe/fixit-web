@@ -1,4 +1,3 @@
-// src/components/Post/utils.ts
 export function timeAgo(dateString: string) {
   const now = new Date();
   const date = new Date(dateString);

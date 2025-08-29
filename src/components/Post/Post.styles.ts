@@ -1,4 +1,3 @@
-// src/components/Post/Post.styles.ts
 import React from "react";
 
 export const containerStyle: React.CSSProperties = {

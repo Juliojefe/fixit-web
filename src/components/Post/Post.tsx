@@ -1,4 +1,3 @@
-// src/components/Post/Post.tsx
 import React, { useState } from "react";
 import { FaHeart, FaRegHeart, FaRegComment, FaRegBookmark, FaBookmark } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
