@@ -1,4 +1,3 @@
-// src/components/User/User.tsx
 import React, { useState } from "react";
 import { useUser } from "../../context/UserContext";
 import { useRouter } from "next/navigation";

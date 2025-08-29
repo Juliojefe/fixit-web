@@ -1,4 +1,3 @@
-// src/components/User/UserSummaryList.tsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useUser } from "../../context/UserContext";
 import User, { UserSummary } from "./User";
