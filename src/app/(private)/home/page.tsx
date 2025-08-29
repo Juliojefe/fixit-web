@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useUser } from "../../../context/UserContext";
-import PostSummaryList from "@/components/PostSummaryList";
+import PostSummaryList from "@/components/Post/PostSummaryList";
 
 export default function HomePage() {
   const { user, accessToken } = useUser();

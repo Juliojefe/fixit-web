@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import UserSummaryList from "@/components/UserSummaryList";
+import UserSummaryList from "@/components/User/UserSummaryList";
 import { useUser } from "../../../context/UserContext";
 
 const DEFAULT_PROFILE =
@@ -116,7 +116,7 @@ export default function ExplorePage() {
             <UserSummaryList
               userIds={userIds}
               currentUserId={currentUserId} // Pass currentUserId (can be undefined)
-              renderUser={(user, idx, handleAction) => (
+              renderUser={(user, idx, handleAction, onProfileClick) => (
                 <div
                   key={user.id}
                   style={{
@@ -129,7 +129,7 @@ export default function ExplorePage() {
                   }}
                 >
                   <div
-                    onClick={() => router.push(`/profile/${user.id}`)}
+                    onClick={onProfileClick}
                     style={{
                       width: 40,
                       height: 40,
