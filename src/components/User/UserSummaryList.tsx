@@ -1,27 +1,19 @@
+// src/components/User/UserSummaryList.tsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useUser } from "../../context/UserContext";
-import { useRouter } from "next/navigation";
+import User, { UserSummary } from "./User";
+import { debounce } from "./utils";
+import {
+  containerStyle,
+  loadingStyle,
+  noUsersStyle,
+  loadingMoreStyle,
+} from "./UserSummaryList.styles";
 
 const DEFAULT_PROFILE = "https://ui-avatars.com/api/?name=User&background=cccccc&color=222222&size=128";
 
 const BATCH_SIZE = 10;
 const DEBOUNCE_MS = 200;
-
-function debounce(fn: (...args: any[]) => void, ms: number) {
-  let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
-}
-
-export type UserSummary = {
-  id: number;
-  name: string;
-  profilePic: string;
-  follows: boolean;
-  followsBack: boolean;
-};
 
 type UserSummaryListProps = {
   userIds: number[];
@@ -45,13 +37,12 @@ export default function UserSummaryList({
   style,
   className,
 }: UserSummaryListProps) {
-  const router = useRouter();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { accessToken, showLoginPopup } = useUser();
+  const { accessToken } = useUser();
 
   const fetchUserBatch = useCallback(
     async (ids: number[]) => {
@@ -134,80 +125,35 @@ export default function UserSummaryList({
     };
   }, [handleScroll]);
 
-  // Handler for follow/unfollow actions
-  const handleAction = async (
-    action: "follow" | "unfollow",
-    user: UserSummary,
-    idx: number
-  ) => {
-    // If user is not logged in, show the popup and stop.
-    if (!accessToken) {
-      showLoginPopup();
-      return;
-    }
-
-    const originalUsers = [...users];
-    const wasFollowing = user.follows;
-
-    // Optimistically update UI
-    setUsers((prev) =>
-      prev.map((u, i) =>
-        i === idx ? { ...u, follows: action === "follow" } : u
-      )
-    );
-
-    let url = "";
-    let method: "POST" | "DELETE" = "POST";
-
-    if (action === "follow") {
-      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}`;
-      method = "POST";
-    } else {
-      url = `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}`;
-      method = "DELETE";
-    }
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      const success = await res.json();
-      if (!success) {
-        // Revert on failure
-        setUsers(originalUsers);
-      } else {
-        // Propagate successful action
-        if (onAction) onAction(user.id, action);
-      }
-    } catch (e) {
-      setUsers(originalUsers);
-    }
-  };
-
   return (
     <div
       ref={contentRef}
       style={{
-        overflowY: "auto",
-        maxHeight: 480,
+        ...containerStyle,
         ...style,
       }}
       className={`hide-scrollbar${className ? " " + className : ""}`}
     >
       {users.length === 0 && loading ? (
-        <div>Loading...</div>
+        <div style={loadingStyle}>Loading...</div>
       ) : users.length === 0 ? (
-        <div style={{ color: "#888" }}>No users found.</div>
+        <div style={noUsersStyle}>No users found.</div>
       ) : (
-        users.map((user, idx) =>
-          renderUser(user, idx, handleAction, () => router.push(`/profile/${user.id}`))
-        )
+        users.map((user, idx) => (
+          <User
+            key={user.id}
+            initialUser={user}
+            idx={idx}
+            onAction={onAction}
+          >
+            {(user, handleAction, onProfileClick) =>
+              renderUser(user, idx, handleAction, onProfileClick)
+            }
+          </User>
+        ))
       )}
       {loading && users.length > 0 && (
-        <div style={{ textAlign: "center", color: "#888", margin: "1rem 0" }}>
+        <div style={loadingMoreStyle}>
           Loading more...
         </div>
       )}
